@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== User ====================
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  nickname          String
+  handle            String   @unique
+  passwordHash      String
+  rankScore         Int      @default(0)
+  winCount          Int      @default(0)
+  loseCount         Int      @default(0)
+  drawCount         Int      @default(0)
+  currentWinStreak  Int      @default(0)
+  bestWinStreak     Int      @default(0)
+  battleTickets     Int      @default(3)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // 장착 아이템 (카테고리별 UserItem ID)
+  equippedHatId        String?
+  equippedGlassesId    String?
+  equippedExpressionId String?
+  equippedOutfitId     String?
+  equippedBackgroundId String?
+  equippedTitleId      String?
+
+  // Relations
+  sentFriendships     Friendship[]        @relation("FriendRequester")
+  receivedFriendships Friendship[]        @relation("FriendReceiver")
+  requestedBattles    Battle[]            @relation("BattleRequester")
+  opponentBattles     Battle[]            @relation("BattleOpponent")
+  participants        BattleParticipant[]
+  userItems           UserItem[]
+  beanTransactions    AntBeanTransaction[]
+
+  @@index([email])
+  @@index([handle])
+  @@index([rankScore(sort: Desc)])
+}
+
+// ==================== AntBeanTransaction (Ledger) ====================
+// 개미콩 잔액 = SUM(amount) WHERE userId
+// 양수 = 적립, 음수 = 차감
+model AntBeanTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Int
+  type        String   // battle_win, battle_lose, battle_draw, streak_bonus, daily_login, item_purchase, signup_bonus
+  referenceId String?  // battleId 또는 itemId (멱등성 체크용)
+  description String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, type])
+  @@index([userId, referenceId, type])
+}
+
+// ==================== Friendship ====================
+model Friendship {
+  id          String   @id @default(uuid())
+  requesterId String
+  receiverId  String
+  status      String   @default("pending") // pending, accepted, rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id])
+  receiver  User @relation("FriendReceiver", fields: [receiverId], references: [id])
+
+  @@unique([requesterId, receiverId])
+  @@index([receiverId, status])
+}
+
+// ==================== Battle ====================
+model Battle {
+  id             String    @id @default(uuid())
+  requesterId    String
+  opponentId     String
+  status         String    @default("pending_period") // pending_period, period_rejected, pending_stock_selection, active, finished, cancelled
+  proposedPeriod String?   // 1d, 3d, 1w, 1m
+  proposedBy     String?   // 기간을 제안한 유저 ID
+  finalPeriod    String?
+  startAt        DateTime?
+  endAt          DateTime?
+  winnerId       String?
+  loserId        String?
+  isDraw         Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  requester    User                @relation("BattleRequester", fields: [requesterId], references: [id])
+  opponent     User                @relation("BattleOpponent", fields: [opponentId], references: [id])
+  participants BattleParticipant[]
+  snapshots    PriceSnapshot[]
+
+  @@index([requesterId, status])
+  @@index([opponentId, status])
+  @@index([status, endAt])
+}
+
+// ==================== BattleParticipant ====================
+model BattleParticipant {
+  id             String @id @default(uuid())
+  battleId       String
+  userId         String
+  stockId        String
+  startPrice     Float?
+  currentPrice   Float?
+  finalPrice     Float?
+  returnRate     Float  @default(0)
+  antScale       Float  @default(1.0)
+  rewardBeans    Int    @default(0)
+  rankScoreDelta Int    @default(0)
+
+  battle Battle @relation(fields: [battleId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  stock  Stock  @relation(fields: [stockId], references: [id])
+
+  @@unique([battleId, userId])
+  @@index([userId])
+}
+
+// ==================== Stock ====================
+model Stock {
+  id            String  @id @default(uuid())
+  code          String  @unique
+  name          String
+  sector        String
+  currentPrice  Float
+  previousClose Float
+  changeRate    Float   @default(0)
+  isActive      Boolean @default(true)
+
+  priceHistory StockPriceHistory[]
+  participants BattleParticipant[]
+  snapshots    PriceSnapshot[]
+
+  @@index([name])
+}
+
+// ==================== StockPriceHistory ====================
+model StockPriceHistory {
+  id      String   @id @default(uuid())
+  stockId String
+  date    DateTime
+  price   Float
+
+  stock Stock @relation(fields: [stockId], references: [id])
+
+  @@unique([stockId, date])
+  @@index([stockId, date(sort: Desc)])
+}
+
+// ==================== PriceSnapshot ====================
+model PriceSnapshot {
+  id         String   @id @default(uuid())
+  battleId   String
+  stockId    String
+  price      Float
+  capturedAt DateTime @default(now())
+
+  battle Battle @relation(fields: [battleId], references: [id])
+  stock  Stock  @relation(fields: [stockId], references: [id])
+
+  @@index([battleId, stockId, capturedAt])
+}
+
+// ==================== AntItem ====================
+model AntItem {
+  id          String  @id @default(uuid())
+  name        String
+  category    String  // hat, glasses, expression, outfit, background, title
+  price       Int
+  rarity      String  @default("common") // common, rare, epic, legendary
+  emoji       String
+  description String?
+  isActive    Boolean @default(true)
+
+  userItems UserItem[]
+
+  @@index([category])
+}
+
+// ==================== UserItem ====================
+model UserItem {
+  id         String   @id @default(uuid())
+  userId     String
+  itemId     String
+  acquiredAt DateTime @default(now())
+
+  user User    @relation(fields: [userId], references: [id])
+  item AntItem @relation(fields: [itemId], references: [id])
+
+  @@unique([userId, itemId])
+}

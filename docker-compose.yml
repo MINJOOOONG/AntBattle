@@ -1,0 +1,43 @@
+name: antbattle
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: antbattle-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-antbattle}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-antbattle123}
+      POSTGRES_DB: ${DB_NAME:-antbattle}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U antbattle"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: antbattle-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-antbattle}:${DB_PASSWORD:-antbattle123}@postgres:5432/${DB_NAME:-antbattle}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      PORT: "3000"
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/src:/app/src
+      - ./server/prisma:/app/prisma
+
+volumes:
+  pgdata:
