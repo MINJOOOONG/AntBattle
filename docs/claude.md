@@ -58,14 +58,16 @@
 |------|------|
 | Project scaffold | 완료 |
 | PostgreSQL + Prisma schema | 완료 |
-| Auth API | 완료 |
-| AntBean ledger | 완료 |
-| User/Friend/Stock API | 진행 중 |
-| Mobile auth/session | 진행 중 |
-| Mobile friend/profile screens | 진행 중 |
-| Battle API/screens | 예정 |
-| Shop/Inventory | 예정 |
-| Ranking | 예정 |
+| Auth API (signup, login, me) | 완료 |
+| AntBean ledger (credit, debit, balance) | 완료 |
+| User/Friend/Stock API | 완료 |
+| Battle API (생성, 기간 협상, 종목 선택, tick, 보상) | 완료 |
+| Shop/Inventory API (구매, 장착, 해제) | 완료 |
+| Ranking API (전체, 친구, 전적 통계) | 완료 |
+| Mobile auth/session screens | 완료 |
+| Mobile friend/profile screens | 완료 |
+| Mobile stores (auth, friend, battle, shop, ranking) | 완료 |
+| UX 폴리시 (공통 컴포넌트, 차트, 애니메이션) | 완료 |
 
 ## 아키텍처 원칙
 
@@ -169,11 +171,14 @@ pending_period -> pending_stock_selection -> active -> finished
 
 > 개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다. 표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
 
+## 현재 Phase 상태
+
+모든 Phase(0~6) 구현 완료. MVP 기능 전체 동작.
+
 ## 다음 우선순위
 
-1. Phase 2 변경사항 타입체크와 API 검증
-2. Friend/User/Stock 모바일 화면과 서버 응답 shape 정합성 확인
-3. Battle API 설계 및 구현
-4. Battle 모바일 화면 구현
-5. Shop/Inventory 구현
-6. Ranking과 프로필 통계 구현
+1. 배틀 모바일 화면 구현 (BattleRequest, PeriodNegotiation, StockSelect, BattleProgress, BattleResult)
+2. 상점/꾸미기 모바일 화면 구현 (Shop, AntCustomize)
+3. 랭킹 모바일 화면 구현 (RankingScreen)
+4. 실제 시세 API 연동 (IMarketDataService 인터페이스 교체)
+5. 배포 준비 (AWS Free Tier)

@@ -1,6 +1,6 @@
 # Architecture
 
-개미배틀의 현재 기술 아키텍처 문서. 초기 모바일 mock 설계에서 서버 API + 모바일 클라이언트 구조로 전환되었으며, 이 문서는 현재 코드 기준의 구현 상태와 다음 확장 지점을 함께 기록한다.
+개미배틀의 기술 아키텍처 문서. 서버 API + 모바일 클라이언트 구조로, 이 문서는 현재 코드 기준의 구현 상태와 확장 지점을 기록한다.
 
 ## 전체 구조
 
@@ -17,7 +17,7 @@ AntBattle/
 │       └── config/         # env validation
 ├── mobile/                 # Expo React Native 앱
 │   └── src/
-│       ├── components/     # 공통 UI, AntCharacter
+│       ├── components/     # 공통 UI, AntCharacter, Chart
 │       ├── navigation/     # React Navigation
 │       ├── screens/        # auth, home, social, profile
 │       ├── services/       # API client wrapper
@@ -45,27 +45,32 @@ Mobile Screen
 ### 서버 책임
 
 - 인증, 비밀번호 해싱, JWT 발급 및 검증
-- 유저/친구/종목/개미콩 API 제공
+- 유저/친구/종목/개미콩/배틀/상점/랭킹 API 제공
 - Prisma schema와 migration 관리
 - AntBeanTransaction 레저 기반 잔액 계산
-- 추후 배틀/상점/인벤토리/랭킹 도메인 확장
+- 배틀 상태 머신 (pending_period → active → finished)
+- 보상/랭크 점수 처리 (Serializable 트랜잭션)
+- 아이템 구매/장착/해제
 
 ### 모바일 책임
 
 - Expo React Native 화면과 네비게이션
 - JWT 저장 및 API 요청
-- 인증 상태와 친구 상태 관리
-- 현재 구현 화면: Splash, Login, Signup, Home, FriendSearch, FriendList, MyPage
-- 현재 placeholder: Battle, Shop
+- 인증/친구/배틀/상점/랭킹 상태 관리
+- 구현 화면: Splash, Login, Signup, Home, FriendSearch, FriendList, MyPage
+- 공통 컴포넌트: Button, EmptyState, LoadingView, ErrorView, SafetyDisclaimer, MiniBarChart
+- AntCharacter 스케일 애니메이션 (300ms easeInOut)
 
 ## 기술 스택
 
 | 영역 | 기술 |
 |------|------|
-| Mobile | Expo, React Native, TypeScript |
+| Mobile | Expo 56, React Native, TypeScript |
 | Navigation | React Navigation native stack, bottom tabs |
 | State | Zustand |
 | HTTP Client | Axios |
+| Chart | react-native-svg |
+| Animation | React Native Animated API |
 | Server | Express, TypeScript |
 | Database | PostgreSQL |
 | ORM | Prisma |
@@ -113,13 +118,37 @@ Mobile Screen
 | GET | `/api/stocks/:id` | Yes | 종목 상세와 30일 가격 히스토리 |
 | GET | `/api/stocks/:id/price` | Yes | 현재가와 등락률 |
 
-### Planned
+### Battles
 
-| Phase | API |
-|-------|-----|
-| Phase 3 | `/api/battles` |
-| Phase 4 | `/api/shop`, `/api/inventory` |
-| Phase 5 | `/api/rankings` |
+| Method | Path | Auth | 설명 |
+|--------|------|------|------|
+| POST | `/api/battles` | Yes | 배틀 생성 (참가비 50콩 차감, 기간 제안) |
+| GET | `/api/battles` | Yes | 내 배틀 목록 (?status 필터) |
+| GET | `/api/battles/:id` | Yes | 배틀 상세 (참가자/종목/수익률) |
+| POST | `/api/battles/:id/period` | Yes | 기간 재제안 |
+| POST | `/api/battles/:id/period/respond` | Yes | 기간 수락/거절 |
+| POST | `/api/battles/:id/stock` | Yes | 종목 선택 (양쪽 완료 시 active 전환) |
+| POST | `/api/battles/:id/cancel` | Yes | 배틀 취소 (참가비 환불) |
+| POST | `/api/battles/tick` | Yes | 가격 업데이트 + 만료 종료 처리 |
+
+### Shop
+
+| Method | Path | Auth | 설명 |
+|--------|------|------|------|
+| GET | `/api/shop/items` | Yes | 상점 아이템 목록 (?category 필터) |
+| POST | `/api/shop/purchase` | Yes | 아이템 구매 (개미콩 차감) |
+| GET | `/api/shop/inventory` | Yes | 보유 아이템 목록 |
+| POST | `/api/shop/inventory/equip` | Yes | 아이템 장착 |
+| POST | `/api/shop/inventory/unequip` | Yes | 아이템 해제 |
+
+### Rankings
+
+| Method | Path | Auth | 설명 |
+|--------|------|------|------|
+| GET | `/api/rankings/global` | Yes | 전체 랭킹 (?limit, 기본 50) + myRank |
+| GET | `/api/rankings/friends` | Yes | 친구 랭킹 (나+친구) + myRank |
+| GET | `/api/rankings/stats/me` | Yes | 내 전적 통계 + 최근 5배틀 |
+| GET | `/api/rankings/stats/:id` | Yes | 유저 전적 통계 + 최근 5배틀 |
 
 ## 데이터 모델
 
@@ -162,7 +191,8 @@ interface AntBeanTransaction {
   id: string;
   userId: string;
   amount: number;        // 양수 적립, 음수 차감
-  type: string;          // signup_bonus, battle_win, item_purchase 등
+  type: string;          // signup_bonus, battle_win, battle_lose, battle_draw,
+                         // streak_bonus, item_purchase, battle_entry, battle_refund
   referenceId: string | null;
   description: string | null;
   createdAt: string;
@@ -185,7 +215,7 @@ interface Friendship {
 }
 ```
 
-친구 관계는 양방향 중복을 서비스 레이어에서 검사한다. Prisma unique 제약은 `requesterId, receiverId` 방향 기준이므로 반대 방향 존재 여부도 코드에서 확인해야 한다.
+친구 관계는 양방향 중복을 서비스 레이어에서 검사한다.
 
 ### Battle
 
@@ -218,8 +248,6 @@ interface Battle {
 }
 ```
 
-현재 schema와 모바일 타입은 준비되어 있으나 배틀 API와 화면은 아직 구현 예정이다.
-
 ### Stock
 
 ```typescript
@@ -234,7 +262,7 @@ interface Stock {
 }
 ```
 
-종목 데이터는 PostgreSQL seed 데이터와 `MockMarketDataService`를 통해 제공한다. 현재 MVP는 실제 증권 API를 호출하지 않는다.
+종목 데이터는 PostgreSQL seed 데이터와 `MockMarketDataService`를 통해 제공한다.
 
 ## 서비스 레이어
 
@@ -248,15 +276,41 @@ interface Stock {
 
 - `credit`, `debit`, `getBalance`, `getTransactions`, `grantBattleReward`
 - 잔액 변경은 항상 `AntBeanTransaction` insert로 처리
-- 아이템 구매 등 차감 로직은 잔액 부족 검사를 서비스에서 수행해야 한다
+- 차감(구매/참가비) 시 Serializable isolation level로 음수 잔액 방지
+- 보상 지급 시 referenceId+type 조합으로 중복 방지 (멱등성)
 
 ### FriendService
 
-- handle 검색
-- 친구 요청 생성
-- 받은 요청 수락/거절
-- 친구 목록 및 대기 요청 조회
-- 친구 관계 삭제
+- handle 검색, 친구 요청 생성, 수락/거절, 목록 조회, 관계 삭제
+- 양방향 중복 검사
+
+### BattleService
+
+- 배틀 생성 (친구 확인, 중복 확인, 참가비 차감)
+- 기간 협상 (제안/수락/거절)
+- 종목 선택 (양쪽 완료 시 active 전환, 시작가 기록)
+- 배틀 취소 (참가비 환불)
+- tick (가격 업데이트 + 만료 종료 + 보상 처리)
+
+### RewardService
+
+- processResult: 승/패/무 판정, 개미콩 보상, 랭크 점수 갱신
+- 승리: +100콩, +30점 / 패배: +20콩, -10점 / 무승부: +50콩, +5점
+- 3연승 이상: +30콩 보너스
+
+### InventoryService
+
+- 상점 아이템 조회 (카테고리 필터)
+- 아이템 구매 (중복 방지, 레저 차감)
+- 인벤토리 조회, 장착/해제
+- 카테고리→User 필드 매핑 (hat→equippedHatId 등)
+
+### RankingService
+
+- 전체 랭킹 (rankScore desc, winCount desc)
+- 친구 랭킹 (나+친구)
+- 유저 전적 통계 (최근 5배틀 포함)
+- myRank 계산
 
 ### MarketDataService
 
@@ -314,13 +368,22 @@ npm run android
 - 적용 후 `npx prisma generate`를 실행한다.
 - seed는 `npm run db:seed`로 재실행한다.
 
+## 확장 가능성 설계
+
+- API stateless → Load Balancer + 다수 인스턴스 가능
+- 레저 테이블 + Serializable 트랜잭션 → Redis 락 없이 동시성 안전
+- IMarketDataService 인터페이스 → 실제 증권 API 교체 가능
+- node-cron tick → 추후 별도 worker + Redis Queue로 분리 가능
+- 랭킹 DB 쿼리 → 추후 Redis sorted set 캐시 가능
+
 ## 구현 로드맵
 
 | Phase | 범위 | 상태 |
 |-------|------|------|
 | 0 | 스캐폴딩, DB, Prisma, health check | 완료 |
 | 1 | Auth, User, AntBean ledger | 완료 |
-| 2 | User/Friend/Stock API, 모바일 인증/친구/프로필 | 진행 중 |
-| 3 | Battle API, 종목 선택, 배틀 진행/결과 | 예정 |
-| 4 | Shop, Inventory, 아이템 구매/장착 | 예정 |
-| 5 | Ranking, 통계, UI polishing | 예정 |
+| 2 | User/Friend/Stock API, 모바일 인증/친구/프로필 | 완료 |
+| 3 | Battle API, 종목 선택, 배틀 진행/결과/보상 | 완료 |
+| 4 | Shop, Inventory, 아이템 구매/장착 | 완료 |
+| 5 | Ranking, 전적 통계 | 완료 |
+| 6 | UX 폴리시 (빈/로딩/에러 상태, 안전 문구, 차트, 애니메이션) | 완료 |

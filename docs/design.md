@@ -92,41 +92,81 @@ React Native 기본 폰트를 사용한다. 텍스트는 화면 밀도에 맞춰
 현재 `mobile/src/components/ant/AntCharacter.tsx`는 이모지 기반 캐릭터다.
 
 - size: `small` 48, `medium` 80, `large` 120
-- scale prop으로 배틀 우세/열세를 표현
+- scale prop으로 배틀 우세/열세를 표현 (Animated.timing 300ms easeInOut)
 - rankScore 기반 border color
 - 장착 아이템은 hat/glasses/expression 이모지 우선 표시
+- scale 변경 시 `useNativeDriver: true`로 성능 최적화
 
 추후 일러스트나 SVG로 바꾸더라도 props 계약은 최대한 유지한다.
 
-## 현재 구현 화면
+### EmptyState
+
+`mobile/src/components/common/EmptyState.tsx`
+
+- Props: `emoji`, `title`, `subtitle?`, `actionLabel?`, `onAction?`
+- 데이터가 없는 화면에서 재사용 (친구 목록, 배틀 목록, 인벤토리 등)
+- 중앙 정렬, 이모지 크게, 선택적 CTA 버튼
+
+### LoadingView
+
+`mobile/src/components/common/LoadingView.tsx`
+
+- Props: `message?` (기본: "로딩 중...")
+- 전체 화면 로딩용 ActivityIndicator + 메시지
+
+### ErrorView
+
+`mobile/src/components/common/ErrorView.tsx`
+
+- Props: `message`, `onRetry?`
+- 에러 이모지 + 메시지 + 선택적 "다시 시도" 버튼
+
+### SafetyDisclaimer
+
+`mobile/src/components/common/SafetyDisclaimer.tsx`
+
+- Props 없음 (고정 문구)
+- 안전 문구를 한곳에서 관리, 여러 화면에서 재사용
+
+### MiniBarChart
+
+`mobile/src/components/chart/MiniBarChart.tsx`
+
+- Props: `data: { label, value, color }[]`, `height?`
+- react-native-svg 기반 SVG 막대 차트
+- 승/패/무 전적 시각화용
+
+## 구현된 화면
 
 ### Auth Stack
 
-- Splash
-- Login
-- Signup
-
-요구사항:
-
-- 가입에는 email, nickname, handle, password가 필요하다.
-- 로그인은 handle, password 기반이다.
-- 안전 문구는 Splash 또는 가입 전후 맥락에 노출한다.
+- **SplashScreen**: 앱 로고 + 안전 문구(SafetyDisclaimer), 1.5초 후 Login으로 이동
+- **LoginScreen**: handle + password 입력, Button.loading 상태, Alert 에러 표시
+- **SignupScreen**: email, nickname, handle, password, confirm 입력
 
 ### Main Tab
 
-현재 탭:
-
-- Home
+- **Home**: 프로필 카드(AntCharacter), 전적 요약, 연승 배너, 소셜 메뉴, SafetyDisclaimer
 - Battle placeholder
 - Shop placeholder
-- MyPage
+- **MyPage**: 프로필, 개미콩 잔액, 전적(MiniBarChart), 로그아웃, SafetyDisclaimer
 
 ### Social Stack
 
-- FriendSearch
-- FriendList
+- **FriendSearchScreen**: handle 검색, 친구 요청 전송
+- **FriendListScreen**: 탭(친구/요청), EmptyState 컴포넌트, RefreshControl, 수락/거절
 
-친구 화면은 검색, 요청, 수락/거절, 목록 확인이 분리되어야 한다. 비어 있는 상태에서는 “친구를 찾아볼까요?” 같은 행동 유도 문구를 쓴다.
+### 상태 처리
+
+| 화면 | 로딩 | 에러 | 빈 상태 |
+|------|------|------|--------|
+| HomeScreen | LoadingView | - | - |
+| MyPageScreen | LoadingView | - | - |
+| FriendListScreen | RefreshControl | - | EmptyState |
+| FriendSearchScreen | isLoading | Alert | 인라인 |
+| LoginScreen | Button.loading | Alert | - |
+| SignupScreen | Button.loading | Alert | - |
+| SplashScreen | 타이머 | - | - |
 
 ## 예정 화면 가이드
 
@@ -225,9 +265,10 @@ React Native 기본 폰트를 사용한다. 텍스트는 화면 밀도에 맞춰
 
 ### 개미 크기 변화
 
-- `transform: scale()` 또는 AntCharacter `scale` prop 사용
-- 300ms 전후의 ease-in-out
+- AntCharacter `scale` prop 사용, `Animated.timing`으로 구현 완료
+- 300ms easeInOut, `useNativeDriver: true`
 - 수익률 차이에 따라 0.75-1.4 범위로 clamp
+- scale prop 변경 시 자동 애니메이션 트리거
 
 ### 화면 전환
 
