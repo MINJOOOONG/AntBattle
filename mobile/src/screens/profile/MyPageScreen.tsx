@@ -5,11 +5,14 @@ import { useAuthStore } from '../../store/authStore';
 import { getRankName, getRankColor } from '../../constants/ranks';
 import AntCharacter from '../../components/ant/AntCharacter';
 import Button from '../../components/common/Button';
+import LoadingView from '../../components/common/LoadingView';
+import SafetyDisclaimer from '../../components/common/SafetyDisclaimer';
+import MiniBarChart from '../../components/chart/MiniBarChart';
 
 export default function MyPageScreen() {
   const { user, antBeans, logout } = useAuthStore();
 
-  if (!user) return null;
+  if (!user) return <LoadingView />;
 
   const rankName = getRankName(user.rankScore);
   const rankColor = getRankColor(user.rankScore);
@@ -65,6 +68,15 @@ export default function MyPageScreen() {
             <Text style={styles.statLabel}>무</Text>
           </View>
         </View>
+        {totalBattles > 0 && (
+          <MiniBarChart
+            data={[
+              { label: '승', value: user.winCount, color: COLORS.gainRed },
+              { label: '패', value: user.loseCount, color: COLORS.lossBue },
+              { label: '무', value: user.drawCount, color: COLORS.neutral },
+            ]}
+          />
+        )}
         <View style={styles.statsExtra}>
           <Text style={styles.extraLabel}>승률: {winRate}%</Text>
           <Text style={styles.extraLabel}>최고 연승: {user.bestWinStreak}회</Text>
@@ -76,10 +88,7 @@ export default function MyPageScreen() {
 
       <Button title="로그아웃" onPress={handleLogout} variant="danger" style={{ marginTop: 24 }} />
 
-      <Text style={styles.disclaimer}>
-        본 앱은 실제 주식 거래와 무관한 게임입니다.{'\n'}
-        모의투자 결과를 실제 투자 판단에 활용하지 마세요.
-      </Text>
+      <SafetyDisclaimer />
     </ScrollView>
   );
 }
@@ -178,12 +187,5 @@ const styles = StyleSheet.create({
   extraLabel: {
     fontSize: 14,
     color: COLORS.textSecondary,
-  },
-  disclaimer: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 32,
-    lineHeight: 16,
   },
 });

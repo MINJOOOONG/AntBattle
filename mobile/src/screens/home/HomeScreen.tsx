@@ -4,6 +4,8 @@ import { COLORS } from '../../constants/colors';
 import { useAuthStore } from '../../store/authStore';
 import { getRankName, getRankColor } from '../../constants/ranks';
 import AntCharacter from '../../components/ant/AntCharacter';
+import LoadingView from '../../components/common/LoadingView';
+import SafetyDisclaimer from '../../components/common/SafetyDisclaimer';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,7 +19,7 @@ type HomeScreenProps = CompositeScreenProps<
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user, antBeans } = useAuthStore();
 
-  if (!user) return null;
+  if (!user) return <LoadingView />;
 
   const rankName = getRankName(user.rankScore);
   const rankColor = getRankColor(user.rankScore);
@@ -84,9 +86,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.disclaimer}>
-        본 앱은 실제 주식 거래와 무관한 게임입니다.
-      </Text>
+      <SafetyDisclaimer />
     </ScrollView>
   );
 }
@@ -202,11 +202,5 @@ const styles = StyleSheet.create({
   menuArrow: {
     fontSize: 20,
     color: COLORS.textSecondary,
-  },
-  disclaimer: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 16,
   },
 });

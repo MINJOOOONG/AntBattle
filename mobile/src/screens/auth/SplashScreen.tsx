@@ -22,8 +22,8 @@ export default function SplashScreen({ navigation }: AuthScreenProps<'Splash'>) 
       <Text style={styles.title}>개미배틀</Text>
       <Text style={styles.subtitle}>친구와 함께하는 모의투자 배틀</Text>
       <Text style={styles.disclaimer}>
-        본 앱은 실제 주식 거래와 무관한 게임입니다.{'\n'}
-        실제 투자 판단에 활용하지 마세요.
+        개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다.{'\n'}
+        표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
       </Text>
     </View>
   );
