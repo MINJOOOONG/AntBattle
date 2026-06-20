@@ -4,6 +4,7 @@ import { COLORS } from '../../constants/colors';
 import { useFriendStore } from '../../store/friendStore';
 import { getRankName, getRankColor } from '../../constants/ranks';
 import Button from '../../components/common/Button';
+import EmptyState from '../../components/common/EmptyState';
 import type { User, Friendship } from '../../types/models';
 
 export default function FriendListScreen() {
@@ -99,11 +100,11 @@ export default function FriendListScreen() {
           renderItem={renderFriend}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadFriends} />}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🐜</Text>
-              <Text style={styles.emptyText}>아직 친구가 없습니다.</Text>
-              <Text style={styles.emptySubText}>친구 찾기에서 친구를 추가해보세요!</Text>
-            </View>
+            <EmptyState
+              emoji="🐜"
+              title="아직 친구가 없습니다"
+              subtitle="친구 찾기에서 친구를 추가해보세요!"
+            />
           }
           contentContainerStyle={friends.length === 0 ? styles.emptyContainer : undefined}
         />
@@ -114,9 +115,10 @@ export default function FriendListScreen() {
           renderItem={renderRequest}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadRequests} />}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>받은 친구 요청이 없습니다.</Text>
-            </View>
+            <EmptyState
+              emoji="📭"
+              title="받은 친구 요청이 없습니다"
+            />
           }
           contentContainerStyle={incoming.length === 0 ? styles.emptyContainer : undefined}
         />
@@ -198,25 +200,5 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 4,
   },
 });
