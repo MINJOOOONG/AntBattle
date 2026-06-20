@@ -25,7 +25,7 @@
 | Phase 3: 배틀 시스템 | 완료 |
 | Phase 4: 상점 + 꾸미기 | 완료 |
 | Phase 5: 랭킹 + 마이페이지 통계 | 완료 |
-| Phase 6: 폴리시 | 예정 |
+| Phase 6: 폴리시 | 완료 |
 
 ## Phase 0: 프로젝트 스캐폴딩
 
@@ -526,4 +526,85 @@ myRank 계산: rankScore가 더 높거나, 동점일 때 winCount가 더 높은 
 
 ### 다음 단계
 
-1. Phase 6: 폴리시 (빈 상태, 에러 상태, 로딩 상태, 안전 문구, 차트, 개미 스케일 애니메이션)
+1. ~~Phase 6: 폴리시~~ → 완료
+
+---
+
+## Phase 6: 폴리시
+
+**목표**: UX 폴리시 — 공통 컴포넌트(빈 상태, 에러, 로딩, 안전 문구), 개미 스케일 애니메이션, 전적 차트
+
+**상태**: 완료 (2026-06-20)
+
+### 생성/수정 파일
+
+**신규 생성**:
+- `mobile/src/components/common/EmptyState.tsx` — 재사용 빈 상태 (emoji, title, subtitle, CTA 버튼)
+- `mobile/src/components/common/LoadingView.tsx` — 전체 화면 로딩 (ActivityIndicator + 메시지)
+- `mobile/src/components/common/ErrorView.tsx` — 에러 화면 (emoji, 메시지, 재시도 버튼)
+- `mobile/src/components/common/SafetyDisclaimer.tsx` — 통일된 안전 문구 컴포넌트
+- `mobile/src/components/chart/MiniBarChart.tsx` — react-native-svg 기반 막대 차트
+
+**수정**:
+- `mobile/src/components/ant/AntCharacter.tsx` — Animated API로 스케일 애니메이션(300ms easeInOut) 추가
+- `mobile/src/screens/home/HomeScreen.tsx` — LoadingView, SafetyDisclaimer 적용
+- `mobile/src/screens/profile/MyPageScreen.tsx` — LoadingView, SafetyDisclaimer, MiniBarChart 적용
+- `mobile/src/screens/social/FriendListScreen.tsx` — EmptyState 컴포넌트로 교체
+- `mobile/src/screens/auth/SplashScreen.tsx` — 안전 문구 내용 통일
+
+**의존성 추가**:
+- `react-native-svg` (차트 렌더링용)
+
+### 공통 컴포넌트 상세
+
+| 컴포넌트 | Props | 용도 |
+|---------|-------|------|
+| EmptyState | emoji, title, subtitle?, actionLabel?, onAction? | 데이터 없을 때 표시 |
+| LoadingView | message? (기본: "로딩 중...") | 화면 전체 로딩 |
+| ErrorView | message, onRetry? | 에러 발생 시 표시 |
+| SafetyDisclaimer | (없음) | 안전 문구 통일 |
+| MiniBarChart | data: {label, value, color}[], height? | 승/패/무 시각화 |
+
+### 안전 문구 통일
+
+모든 화면에서 동일한 문구 사용:
+> 개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다.
+> 표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
+
+### 개미 스케일 애니메이션
+
+- React Native 내장 `Animated.timing` API 사용 (외부 라이브러리 불필요)
+- scale prop 변경 시 300ms easeInOut 트랜지션
+- `transform: [{ scale: animatedScale }]`로 적용
+- `useNativeDriver: true`로 성능 최적화
+
+### 검증 결과
+
+| 항목 | 결과 |
+|------|------|
+| `cd server && npx tsc --noEmit` | 에러 없음 |
+| `cd mobile && npx tsc --noEmit` | 에러 없음 |
+| HomeScreen user=null 시 | LoadingView 표시 |
+| MyPageScreen user=null 시 | LoadingView 표시 |
+| FriendListScreen 친구 0명 | EmptyState 컴포넌트 표시 |
+| SplashScreen 안전 문구 | 통일된 문구 표시 |
+| AntCharacter scale 변경 | 300ms 애니메이션 동작 |
+| MiniBarChart 렌더링 | SVG 막대 차트 정상 |
+
+---
+
+## 전체 프로젝트 완료 요약
+
+모든 Phase(0~6) 구현 완료. MVP 기능 전체 동작.
+
+### 구현된 기능
+
+| 영역 | 기능 |
+|------|------|
+| 인증 | 회원가입, 로그인, JWT, 세션 관리 |
+| 유저 | 프로필 조회, 개미콩 잔액/내역 |
+| 친구 | 검색, 요청, 수락/거절, 목록, 삭제 |
+| 배틀 | 생성, 기간 협상, 종목 선택, 진행, 종료, 보상 |
+| 상점 | 아이템 조회, 구매, 인벤토리, 장착/해제 |
+| 랭킹 | 전체/친구 랭킹, 전적 통계 |
+| 폴리시 | 빈/로딩/에러 상태, 안전 문구, 차트, 애니메이션 |
