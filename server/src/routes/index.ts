@@ -4,6 +4,7 @@ import friendRoutes from './friend.routes';
 import stockRoutes from './stock.routes';
 import userRoutes from './user.routes';
 import battleRoutes from './battle.routes';
+import shopRoutes from './shop.routes';
 
 const router = Router();
 
@@ -12,10 +13,7 @@ router.use('/friends', friendRoutes);
 router.use('/stocks', stockRoutes);
 router.use('/users', userRoutes);
 router.use('/battles', battleRoutes);
-
-// Phase 4에서 추가
-// router.use('/shop', shopRoutes);
-// router.use('/inventory', inventoryRoutes);
+router.use('/shop', shopRoutes);
 
 // Phase 5에서 추가
 // router.use('/rankings', rankingRoutes);
