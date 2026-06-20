@@ -17,9 +17,15 @@
 
 **기준일**: 2026-06-20
 
-현재 프로젝트는 초기 모바일 mock 설계에서 `server/` Express API + `mobile/` Expo 앱 구조로 전환되어 있다. Phase 0과 Phase 1은 완료 기록이 있으며, Phase 2 범위로 보이는 유저/친구/종목 API와 모바일 인증/친구/프로필 화면 변경사항이 워크트리에 존재한다.
-
-주의: 2026-06-20 현재 `mobile/`과 `server/`에 미커밋 변경사항이 있으므로, Phase 2는 검증 완료 전까지 “진행 중”으로 취급한다.
+| Phase | 상태 |
+|-------|------|
+| Phase 0: 프로젝트 스캐폴딩 | 완료 |
+| Phase 1: Auth + 유저 + AntBean 레저 | 완료 |
+| Phase 2: 유저/친구/종목 API + 모바일 기본 화면 | 완료 |
+| Phase 3: 배틀 시스템 | 완료 |
+| Phase 4: 상점 + 꾸미기 | 예정 |
+| Phase 5: 랭킹 + 마이페이지 통계 | 예정 |
+| Phase 6: 폴리시 | 예정 |
 
 ## Phase 0: 프로젝트 스캐폴딩
 
@@ -287,6 +293,112 @@ CREATE INDEX "User_email_idx" ON "User"("email");
 
 ### 다음 단계
 
-1. Battle 도메인 API 설계 및 구현 (Phase 3)
-2. 종목 선택과 배틀 진행 화면 구현
-3. 배틀 종료, 보상, 랭크 점수 반영
+1. ~~Battle 도메인 API 설계 및 구현 (Phase 3)~~ → 완료
+2. 배틀 모바일 화면 구현
+3. Shop/Inventory 구현 (Phase 4)
+
+---
+
+## Phase 3: 배틀 시스템
+
+**목표**: 친구와 1:1 주식 수익률 배틀 전체 플로우 구현. 배틀 생성 → 기간 협상 → 종목 선택 → 진행(가격 업데이트) → 종료 → 보상 지급.
+
+**상태**: 완료 (2026-06-20)
+
+### 생성/수정 파일
+
+**신규 생성**:
+- `server/src/services/battle.service.ts` — 배틀 생성, 기간 협상, 종목 선택, 시작, 취소, tick(가격 갱신/종료)
+- `server/src/services/reward.service.ts` — 배틀 종료 후 개미콩 보상/랭크 점수 처리 (DB 트랜잭션)
+- `server/src/controllers/battle.controller.ts` — 배틀 API 핸들러
+- `server/src/routes/battle.routes.ts` — 배틀 라우트 + zod 검증
+- `mobile/src/services/battle.service.ts` — 배틀 API 호출 래퍼
+- `mobile/src/store/battleStore.ts` — Zustand 배틀 스토어
+
+**수정**:
+- `server/src/routes/index.ts` — battle 라우트 등록
+- `server/src/types/index.ts` — `battle_entry`, `battle_refund` 트랜잭션 타입 추가
+
+### 데이터 모델
+
+기존 Prisma 스키마 변경 없음. Phase 0에서 생성한 `Battle`, `BattleParticipant`, `PriceSnapshot` 모델을 그대로 활용.
+
+### 배틀 상태 흐름
+
+```
+pending_period → pending_stock_selection → active → finished
+             ↘ period_rejected → pending_period (재제안)
+             ↘ cancelled (참가비 환불)
+```
+
+### API 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| POST | `/api/battles` | 필요 | 배틀 생성 (참가비 50콩 차감, 기간 제안) |
+| GET | `/api/battles` | 필요 | 내 배틀 목록 (?status 필터) |
+| GET | `/api/battles/:id` | 필요 | 배틀 상세 (참가자/종목/수익률 포함) |
+| POST | `/api/battles/:id/period` | 필요 | 기간 재제안 |
+| POST | `/api/battles/:id/period/respond` | 필요 | 기간 수락/거절 |
+| POST | `/api/battles/:id/stock` | 필요 | 종목 선택 (양쪽 완료 시 active 전환) |
+| POST | `/api/battles/:id/cancel` | 필요 | 배틀 취소 (active 전, 참가비 환불) |
+| POST | `/api/battles/tick` | 필요 | 가격 업데이트 + 기간 만료 종료 처리 (cron용) |
+
+### 개미콩 처리 방식
+
+| 이벤트 | 처리 | 트랜잭션 타입 |
+|--------|------|-------------|
+| 배틀 생성 | 양쪽 50콩 차감 (Serializable 트랜잭션) | `battle_entry` |
+| 배틀 취소 | 양쪽 50콩 환불 | `battle_refund` |
+| 승리 | 100콩 지급 (멱등, referenceId 체크) | `battle_win` |
+| 패배 | 20콩 위로금 지급 | `battle_lose` |
+| 무승부 | 양쪽 50콩 지급 | `battle_draw` |
+| 3연승+ | 30콩 연승 보너스 | `streak_bonus` |
+
+### 보상/랭크 처리
+
+- 승리: rankScore +30, winCount +1, currentWinStreak +1
+- 패배: rankScore -10 (최소 0), loseCount +1, currentWinStreak 초기화
+- 무승부: rankScore +5, drawCount +1, currentWinStreak 초기화
+- 모든 보상은 `rewardService.processResult()` → DB 트랜잭션으로 일괄 처리
+- `grantBattleReward()`의 referenceId+type 조합으로 중복 지급 방지 (멱등성)
+
+### 검증 결과
+
+| 항목 | 결과 |
+|------|------|
+| `cd server && npx tsc --noEmit` | 에러 없음 |
+| `cd mobile && npx tsc --noEmit` | 에러 없음 |
+| 배틀 생성 (POST /battles) | 201 Created, status: pending_period |
+| 참가비 차감 확인 | 양쪽 500 → 450 (-50콩) |
+| 기간 수락 | pending_stock_selection, finalPeriod: 1d |
+| 종목 선택 (1명) | pending_stock_selection, participants: 1 |
+| 종목 선택 (2명) → 배틀 시작 | active, startAt 설정, 시작가 기록 |
+| 배틀 목록 조회 | 1건, active 상태 |
+| Tick (가격 업데이트) | updated: 1, finished: 0 |
+| 수익률/스케일 갱신 | 민두개미 -0.13% (scale 0.98), 철수개미 +0.82% (scale 1.02) |
+| 중복 배틀 방지 | 409 "이미 진행 중인 배틀이 있습니다" |
+
+### Troubleshooting Notes
+
+#### 2026-06-20: validate 미들웨어와 zod 스키마 구조 불일치
+
+**증상**: `POST /api/battles` 호출 시 `{"error":{"code":"VALIDATION_ERROR","message":"Invalid request data"}}`
+
+**원인**: `validate()` 미들웨어는 `schema.parse(req.body)`로 body를 직접 파싱하는데, battle.routes.ts에서 `z.object({ body: z.object({...}) })` 형태로 이중 래핑하여 `req.body`를 `{ body: { opponentId, ... } }` 구조로 검증하려 했음.
+
+**해결**: 기존 friend.routes.ts 패턴과 동일하게 `z.object({ opponentId, proposedPeriod })` 형태로 body 스키마만 직접 전달.
+
+#### 2026-06-20: /tick 라우트가 /:id에 매칭되는 문제
+
+**증상**: `POST /api/battles/tick` 호출 시 `tick`이 `:id` 파라미터로 매칭됨.
+
+**원인**: Express 라우트 등록 순서에서 `/:id`가 `/tick`보다 먼저 매칭.
+
+**해결**: `/tick` 라우트를 `/:id` 라우트보다 먼저 등록.
+
+### 다음 단계
+
+1. 배틀 모바일 화면 구현 (BattleRequest, PeriodNegotiation, StockSelect, BattleProgress, BattleResult)
+2. Shop/Inventory 구현 (Phase 4)
+3. Ranking + MyPage 통계 (Phase 5)
