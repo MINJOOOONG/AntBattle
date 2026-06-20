@@ -29,6 +29,8 @@ export type BeanTransactionType =
   | 'battle_win'
   | 'battle_lose'
   | 'battle_draw'
+  | 'battle_entry'
+  | 'battle_refund'
   | 'streak_bonus'
   | 'daily_login'
   | 'item_purchase'
