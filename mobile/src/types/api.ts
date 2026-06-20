@@ -27,6 +27,7 @@ export interface LoginRequest {
 export interface AuthResponse {
   user: User;
   token: string;
+  antBeans: number;
 }
 
 // Friends
