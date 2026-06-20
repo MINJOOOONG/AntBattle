@@ -23,8 +23,8 @@
 | Phase 1: Auth + 유저 + AntBean 레저 | 완료 |
 | Phase 2: 유저/친구/종목 API + 모바일 기본 화면 | 완료 |
 | Phase 3: 배틀 시스템 | 완료 |
-| Phase 4: 상점 + 꾸미기 | 예정 |
-| Phase 5: 랭킹 + 마이페이지 통계 | 예정 |
+| Phase 4: 상점 + 꾸미기 | 완료 |
+| Phase 5: 랭킹 + 마이페이지 통계 | 완료 |
 | Phase 6: 폴리시 | 예정 |
 
 ## Phase 0: 프로젝트 스캐폴딩
@@ -401,4 +401,129 @@ pending_period → pending_stock_selection → active → finished
 
 1. 배틀 모바일 화면 구현 (BattleRequest, PeriodNegotiation, StockSelect, BattleProgress, BattleResult)
 2. Shop/Inventory 구현 (Phase 4)
-3. Ranking + MyPage 통계 (Phase 5)
+3. ~~Ranking + MyPage 통계 (Phase 5)~~ → 완료
+
+---
+
+## Phase 4: 상점 + 꾸미기
+
+**목표**: 개미콩으로 아이템 구매, 보유 아이템 관리, 개미 캐릭터 장착/해제
+
+**상태**: 완료 (2026-06-20)
+
+### 생성/수정 파일
+
+**신규 생성**:
+- `server/src/services/inventory.service.ts` — 상점 아이템 조회, 구매(중복 방지, 레저 차감), 인벤토리, 장착/해제
+- `server/src/controllers/shop.controller.ts` — 상점 API 핸들러
+- `server/src/routes/shop.routes.ts` — 상점 라우트 + zod 검증
+- `mobile/src/services/shop.service.ts` — 상점 API 호출 래퍼
+- `mobile/src/store/shopStore.ts` — Zustand 상점 스토어
+
+**수정**:
+- `server/src/routes/index.ts` — shop 라우트 등록
+
+### API 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| GET | `/api/shop/items` | 필요 | 상점 아이템 목록 (?category 필터) |
+| POST | `/api/shop/purchase` | 필요 | 아이템 구매 (개미콩 차감, 중복 방지) |
+| GET | `/api/shop/inventory` | 필요 | 보유 아이템 목록 |
+| POST | `/api/shop/inventory/equip` | 필요 | 아이템 장착 |
+| POST | `/api/shop/inventory/unequip` | 필요 | 아이템 해제 |
+
+### 장착 시스템
+
+카테고리별 User 필드 매핑:
+
+| 카테고리 | User 필드 | 저장 값 |
+|---------|----------|--------|
+| hat | equippedHatId | 아이템 emoji |
+| glasses | equippedGlassesId | 아이템 emoji |
+| expression | equippedExpressionId | 아이템 emoji |
+| outfit | equippedOutfitId | 아이템 emoji |
+| background | equippedBackgroundId | 아이템 emoji |
+| title | equippedTitleId | 아이템 emoji |
+
+### 검증 결과
+
+| 항목 | 결과 |
+|------|------|
+| `cd server && npx tsc --noEmit` | 에러 없음 |
+| `cd mobile && npx tsc --noEmit` | 에러 없음 |
+| GET /api/shop/items | 200 OK, 23개 아이템 |
+| GET /api/shop/items?category=hat | 200 OK, 카테고리 필터 정상 |
+| POST /api/shop/purchase | 200 OK, 개미콩 차감, userItem 반환 |
+| POST /api/shop/purchase (중복) | 409 "이미 보유한 아이템입니다" |
+| GET /api/shop/inventory | 200 OK, 보유 아이템 목록 |
+| POST /api/shop/inventory/equip | 200 OK, User.equippedHatId 등 갱신 |
+| POST /api/shop/inventory/unequip | 200 OK, 해당 필드 null 전환 |
+
+---
+
+## Phase 5: 랭킹 + 마이페이지 통계
+
+**목표**: 전체/친구 랭킹, 유저 전적 통계 조회
+
+**상태**: 완료 (2026-06-20)
+
+### 생성/수정 파일
+
+**신규 생성**:
+- `server/src/services/ranking.service.ts` — 전체 랭킹(rankScore desc, winCount desc), 친구 랭킹, 유저 전적 통계(최근 5배틀 포함)
+- `server/src/controllers/ranking.controller.ts` — 랭킹 API 핸들러
+- `server/src/routes/ranking.routes.ts` — 랭킹 라우트 (authMiddleware)
+- `mobile/src/services/ranking.service.ts` — 랭킹 API 호출 래퍼
+- `mobile/src/store/rankingStore.ts` — Zustand 랭킹 스토어
+
+**수정**:
+- `server/src/routes/index.ts` — rankings 라우트 등록
+
+### API 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| GET | `/api/rankings/global` | 필요 | 전체 랭킹 (?limit, 기본 50) + myRank |
+| GET | `/api/rankings/friends` | 필요 | 친구 랭킹 (나+친구) + myRank |
+| GET | `/api/rankings/stats/me` | 필요 | 내 전적 통계 + 최근 5배틀 |
+| GET | `/api/rankings/stats/:id` | 필요 | 유저 전적 통계 + 최근 5배틀 |
+
+### 랭킹 정렬 기준
+
+1차: rankScore 내림차순, 2차: winCount 내림차순
+
+myRank 계산: rankScore가 더 높거나, 동점일 때 winCount가 더 높은 유저 수 + 1
+
+### 전적 통계 응답
+
+```json
+{
+  "user": { "...userFields", "rankName": "브론즈 개미" },
+  "stats": {
+    "totalBattles": 0,
+    "winRate": 0,
+    "winCount": 0,
+    "loseCount": 0,
+    "drawCount": 0,
+    "currentWinStreak": 0,
+    "bestWinStreak": 0
+  },
+  "recentBattles": []
+}
+```
+
+### 검증 결과
+
+| 항목 | 결과 |
+|------|------|
+| `cd server && npx tsc --noEmit` | 에러 없음 |
+| `cd mobile && npx tsc --noEmit` | 에러 없음 |
+| GET /api/rankings/global | 200 OK, 3명 랭킹, myRank: 1 |
+| GET /api/rankings/friends | 200 OK, 2명(나+친구), myRank: 2 |
+| GET /api/rankings/stats/me | 200 OK, 전적 통계 + rankName |
+| GET /api/rankings/stats/:id | 200 OK, 타 유저 전적 통계 |
+
+### 다음 단계
+
+1. Phase 6: 폴리시 (빈 상태, 에러 상태, 로딩 상태, 안전 문구, 차트, 개미 스케일 애니메이션)
