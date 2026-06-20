@@ -1,130 +1,179 @@
 # Claude Instructions
 
-개미배틀 프로젝트에서 Claude가 따라야 할 규칙과 컨텍스트.
+개미배틀 프로젝트에서 Claude와 자동화 에이전트가 따라야 할 규칙과 현재 컨텍스트.
 
 ## 프로젝트 개요
 
-개미배틀은 친구와 한국 주식 종목을 하나씩 고르고, 정해진 기간 동안 수익률로 1:1 배틀하는 소셜 투자 게임 앱이다.
+개미배틀은 친구와 한국 주식 종목을 하나씩 고르고, 정해진 기간 동안 수익률로 1:1 배틀하는 소셜 투자 게임 앱이다. 실제 돈을 걸거나 실제 주식을 거래하는 앱이 아니다.
+
+현재 구조는 `server/` Express API와 `mobile/` Expo React Native 앱으로 분리되어 있다.
 
 ## 절대 금지 사항
 
 ### 구현 금지
 
 - 실제 증권 계좌 연결 코드
-- 실제 주식 주문 (매수/매도) API 호출
+- 실제 주식 주문 API 호출
+- 매수/매도/정정/취소 주문 기능
 - 자동매매 로직
-- API key, secret을 프론트엔드에 저장
-- 토스증권/한국투자증권 등 실제 증권 API 호출 코드
+- API key, secret을 모바일 앱 또는 프론트엔드에 저장
 - 사용자 증권 계좌 비밀번호 입력 UI
 - 실제 돈 베팅/결제 기능
 - 개미콩 현금 환전 기능
 - 유저 간 개미콩 송금
 - 승자가 패자의 개미콩을 빼앗는 로직
-- 종목 추천 / AI 매매 추천 기능
+- 종목 추천 또는 AI 매매 추천 기능
 
-### 디자인 금지
+### 표현 금지
 
-- 도박 앱처럼 보이는 UI (슬롯머신, 룰렛 등)
-- "베팅", "판돈", "도박" 등의 용어 사용
-- 실제 돈이 걸려있다고 오해할 수 있는 표현
-- 투자 추천/자문으로 오해할 수 있는 표현
+- "베팅", "판돈", "도박", "올인"
+- "매수 추천", "수익 보장", "따라 사기"
+- 실제 돈이 걸려 있다고 오해될 수 있는 표현
+- 투자 자문으로 오해될 수 있는 표현
 
 ## 기술 스택
 
-- **Framework**: React Native (Expo)
-- **Language**: TypeScript
-- **State**: Zustand
-- **Navigation**: React Navigation (Expo Router도 가능)
-- **Data**: Mock 데이터 (1차 MVP)
-- **Animation**: React Native Animated / Reanimated
+### Server
+
+- Express
+- TypeScript
+- Prisma
+- PostgreSQL
+- bcrypt
+- JWT
+- zod
+
+### Mobile
+
+- Expo React Native
+- TypeScript
+- Zustand
+- React Navigation
+- Axios
+- AsyncStorage
+
+## 현재 구현 상태
+
+| 영역 | 상태 |
+|------|------|
+| Project scaffold | 완료 |
+| PostgreSQL + Prisma schema | 완료 |
+| Auth API | 완료 |
+| AntBean ledger | 완료 |
+| User/Friend/Stock API | 진행 중 |
+| Mobile auth/session | 진행 중 |
+| Mobile friend/profile screens | 진행 중 |
+| Battle API/screens | 예정 |
+| Shop/Inventory | 예정 |
+| Ranking | 예정 |
 
 ## 아키텍처 원칙
 
-### 서비스 레이어 패턴
+### 서버
 
-모든 데이터 접근은 서비스 인터페이스를 통해 이루어진다. MVP에서는 mock 구현체를 사용하되, 인터페이스를 유지하여 추후 백엔드 교체가 용이하도록 한다.
+- HTTP handler는 `controllers/`에 둔다.
+- 라우팅은 `routes/`에 둔다.
+- 비즈니스 로직은 `services/`에 둔다.
+- DB 접근은 Prisma를 사용한다.
+- request body 검증은 zod schema와 `validate` middleware를 사용한다.
+- 인증이 필요한 라우트는 `authMiddleware`를 사용한다.
+- API 응답에 `passwordHash`를 절대 포함하지 않는다.
+
+### 모바일
+
+- 화면은 `screens/`에 둔다.
+- API 호출 래퍼는 `services/`에 둔다.
+- 로그인 세션/공유 상태는 Zustand store에 둔다.
+- 타입은 `types/models.ts`, `types/api.ts`, `types/enums.ts`에 둔다.
+- 색상/랭크/보상 값은 `constants/`에 둔다.
+
+### 데이터 흐름
 
 ```
-Screen → Store → Service (interface) → MockService (구현체)
-                                      → 추후 APIService (구현체)
+Mobile Screen -> Zustand Store -> Mobile Service -> API Client
+Express Route -> Controller -> Service -> Prisma -> PostgreSQL
 ```
 
-### MarketDataService 추상화
+## MarketDataService 원칙
 
-시세 데이터는 반드시 `IMarketDataService` 인터페이스를 통해 접근한다. 현재는 `MockMarketDataService`를 사용하며, 추후 토스증권 Open API 등으로 교체할 수 있다. 단, 시세 조회만 허용하고 주문 기능은 구현하지 않는다.
+시세 데이터는 서버의 `IMarketDataService` 인터페이스를 통해 접근한다.
 
-### 보상 시스템
+- 현재 구현은 mock/DB 기반이다.
+- 실제 시세 API가 필요하면 서버 adapter로만 추가한다.
+- 모바일 앱에 외부 증권 API key를 저장하지 않는다.
+- 시세 조회만 허용하고 주문 기능은 구현하지 않는다.
 
-- 개미콩은 시스템이 지급한다 (패자에게서 빼앗지 않음)
-- 승리 +100, 패배 +20, 무승부 +50, 연승 보너스 +30
-- 랭크 점수: 승리 +30, 패배 -10, 무승부 +5
+## AntBean 원칙
+
+- 개미콩은 `AntBeanTransaction` ledger로 관리한다.
+- 잔액은 거래 내역 합산으로 계산한다.
+- 지급은 시스템이 한다.
+- 승리 +100, 패배 +20, 무승부 +50, 연승 보너스 +30 기준을 유지한다.
+- 아이템 구매는 음수 transaction으로 기록한다.
+- 유저 간 송금과 패자 재화 약탈은 금지한다.
 
 ## 코딩 컨벤션
 
-### 파일 구조
+### 파일 네이밍
 
-```
-src/
-├── components/       # 재사용 가능한 UI 컴포넌트
-├── screens/          # 화면별 컴포넌트
-├── navigation/       # 네비게이션 설정
-├── services/         # 비즈니스 로직 서비스
-├── store/            # Zustand 스토어
-├── types/            # TypeScript 타입
-├── data/             # Mock 데이터
-├── utils/            # 유틸리티 함수
-└── constants/        # 상수 값
-```
+- React 컴포넌트: PascalCase (`HomeScreen.tsx`)
+- 서비스 파일: kebab 또는 dot suffix는 기존 패턴 우선 (`auth.service.ts`)
+- Store: camelCase (`authStore.ts`)
+- 타입/인터페이스: PascalCase
+- 상수: UPPER_SNAKE_CASE 또는 기존 constants export 패턴
 
-### 네이밍
-
-- 컴포넌트: PascalCase (`BattleProgress.tsx`)
-- 서비스: camelCase (`battleService.ts`)
-- 타입: PascalCase (`BattleStatus`)
-- 상수: UPPER_SNAKE_CASE (`MAX_ANT_SCALE`)
-- 스토어: camelCase (`useBattleStore`)
-
-### 한국어 사용
+### 언어
 
 - UI 텍스트: 한국어
-- 코드/변수명: 영어
+- 변수/함수/타입명: 영어
 - 주석: 한국어 허용
-- 타입/인터페이스: 영어
+- 에러 메시지: 사용자에게 보이는 메시지는 한국어
 
 ## 배틀 핵심 로직
 
-### 수익률 계산
+### 수익률
 
-```
-수익률 = (현재가 - 시작가) / 시작가 * 100
-```
-
-### 개미 크기 계산
-
-```
-기본 scale: 1.0
-앞서는 개미: 1.05 ~ 1.4
-뒤처지는 개미: 0.75 ~ 0.95
-수익률 차이 기반으로 계산, clamp(0.75, 1.4)
+```typescript
+returnRate = (currentPrice - startPrice) / startPrice * 100;
 ```
 
-### 배틀 상태 흐름
+### 개미 크기
+
+```text
+base scale: 1.0
+leader scale: 1.05-1.4
+trailer scale: 0.75-0.95
+```
+
+수익률 차이 기반으로 계산하고 0.75-1.4 범위로 clamp한다.
+
+### 상태 흐름
 
 ```
-pending_period → pending_stock_selection → active → finished
-              ↘ period_rejected (재제안) ↗
+pending_period -> pending_stock_selection -> active -> finished
+              -> period_rejected -> pending_period
 ```
+
+## Migration 운영 규칙
+
+현재 환경에서는 `prisma migrate dev`가 non-interactive 문제로 실패할 수 있다.
+
+1. migration SQL 파일을 직접 작성한다.
+2. `npx prisma migrate deploy`로 적용한다.
+3. `npx prisma generate`를 실행한다.
+4. 필요하면 `npm run db:seed`를 실행한다.
 
 ## 안전 문구
 
-앱 내 적절한 위치(온보딩, 마이페이지, 배틀 시작 전)에 반드시 포함:
+앱 내 적절한 위치에 반드시 포함한다.
 
-> "개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다. 표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다."
+> 개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다. 표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
 
-## MVP 우선순위
+## 다음 우선순위
 
-1. 프로젝트 구조 + 타입 + mock data + 핵심 플로우 (홈/배틀/종목선택/결과/꾸미기)
-2. 친구 시스템 + 배틀 신청 + 기간 협상
-3. 개미콩 보상 + 랭크 + 아이템 구매/장착
-4. 랭킹 + 마이페이지 + 전적/통계
-5. UI 다듬기 + 애니메이션 + 빈 상태/에러/로딩
+1. Phase 2 변경사항 타입체크와 API 검증
+2. Friend/User/Stock 모바일 화면과 서버 응답 shape 정합성 확인
+3. Battle API 설계 및 구현
+4. Battle 모바일 화면 구현
+5. Shop/Inventory 구현
+6. Ranking과 프로필 통계 구현

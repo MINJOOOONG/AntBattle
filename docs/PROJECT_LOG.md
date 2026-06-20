@@ -13,6 +13,14 @@
 
 ---
 
+## 현재 상태 요약
+
+**기준일**: 2026-06-20
+
+현재 프로젝트는 초기 모바일 mock 설계에서 `server/` Express API + `mobile/` Expo 앱 구조로 전환되어 있다. Phase 0과 Phase 1은 완료 기록이 있으며, Phase 2 범위로 보이는 유저/친구/종목 API와 모바일 인증/친구/프로필 화면 변경사항이 워크트리에 존재한다.
+
+주의: 2026-06-20 현재 `mobile/`과 `server/`에 미커밋 변경사항이 있으므로, Phase 2는 검증 완료 전까지 “진행 중”으로 취급한다.
+
 ## Phase 0: 프로젝트 스캐폴딩
 
 **목표**: 프로젝트 루트/서버/모바일 기본 구조 생성, Docker Compose + PostgreSQL, Prisma 스키마, Express health check
@@ -172,3 +180,113 @@ CREATE INDEX "User_email_idx" ON "User"("email");
 |-----------|----------|--------|
 | `20260617165815_init` | 전체 스키마 초기 생성 (10 테이블) | 2026-06-18 |
 | `20260618020000_add_user_email` | User.email 컬럼 추가 (NOT NULL, UNIQUE, INDEX) | 2026-06-18 |
+
+---
+
+## Phase 2: 유저/친구/종목 API + 모바일 기본 화면
+
+**목표**: 인증 이후 사용할 유저 프로필, 친구, 종목 조회 API와 모바일 기본 화면/스토어/서비스 연결
+
+**상태**: 완료 (2026-06-20)
+
+### 현재 워크트리에서 확인된 신규/수정 파일
+
+**Server**:
+
+- `server/src/controllers/friend.controller.ts`
+- `server/src/controllers/stock.controller.ts`
+- `server/src/controllers/user.controller.ts`
+- `server/src/routes/friend.routes.ts`
+- `server/src/routes/stock.routes.ts`
+- `server/src/routes/user.routes.ts`
+- `server/src/services/friend.service.ts`
+- `server/src/services/market-data/`
+- `server/src/routes/index.ts`
+
+**Mobile**:
+
+- `mobile/src/components/ant/AntCharacter.tsx`
+- `mobile/src/components/common/Button.tsx`
+- `mobile/src/navigation/MainTabNavigator.tsx`
+- `mobile/src/navigation/RootNavigator.tsx`
+- `mobile/src/navigation/types.ts`
+- `mobile/src/screens/auth/LoginScreen.tsx`
+- `mobile/src/screens/auth/SignupScreen.tsx`
+- `mobile/src/screens/auth/SplashScreen.tsx`
+- `mobile/src/screens/home/HomeScreen.tsx`
+- `mobile/src/screens/profile/MyPageScreen.tsx`
+- `mobile/src/screens/social/FriendListScreen.tsx`
+- `mobile/src/screens/social/FriendSearchScreen.tsx`
+- `mobile/src/services/auth.service.ts`
+- `mobile/src/services/friend.service.ts`
+- `mobile/src/services/stock.service.ts`
+- `mobile/src/services/user.service.ts`
+- `mobile/src/store/authStore.ts`
+- `mobile/src/store/friendStore.ts`
+- `mobile/src/types/api.ts`
+
+### API 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| GET | `/api/users/me` | 필요 | 내 프로필 |
+| GET | `/api/users/me/beans` | 필요 | 개미콩 잔액과 최근 거래 |
+| GET | `/api/users/me/beans/history` | 필요 | 개미콩 거래 내역 |
+| GET | `/api/users/:id` | 필요 | 유저 프로필 |
+| GET | `/api/friends` | 필요 | 친구 목록 |
+| GET | `/api/friends/requests` | 필요 | 받은/보낸 친구 요청 |
+| POST | `/api/friends/search` | 필요 | handle 기반 유저 검색 |
+| POST | `/api/friends/request` | 필요 | 친구 요청 |
+| PATCH | `/api/friends/request/:id` | 필요 | 친구 요청 수락/거절 |
+| DELETE | `/api/friends/:friendshipId` | 필요 | 친구 관계 삭제 |
+| GET | `/api/stocks` | 필요 | 종목 목록, search/sector query 지원 |
+| GET | `/api/stocks/:id` | 필요 | 종목 상세와 가격 히스토리 |
+| GET | `/api/stocks/:id/price` | 필요 | 현재가와 등락률 |
+
+### 모바일 구현 범위
+
+- Auth stack: Splash, Login, Signup
+- App stack: MainTab, FriendSearch, FriendList
+- Main tabs: Home, Battle placeholder, Shop placeholder, MyPage
+- Zustand stores: authStore, friendStore
+- API service wrappers: auth, user, friend, stock
+- 공통 UI: Button, AntCharacter
+
+### 검증 결과
+
+| 항목 | 결과 |
+|------|------|
+| `cd server && npx tsc --noEmit` | 에러 없음 |
+| `cd mobile && npx tsc --noEmit` | 에러 없음 |
+| GET /api/users/me | 200 OK, 민두개미, antBeans: 500 |
+| GET /api/users/me/beans | 200 OK, balance: 500, transactions: 1건 |
+| POST /api/friends/search | 200 OK, ant_chulsoo 검색 성공 |
+| POST /api/friends/request | 200 OK, pending 상태 생성 |
+| PATCH /api/friends/request/:id (수락) | 200 OK, accepted 전환 |
+| GET /api/friends | 200 OK, 1명 (철수개미) |
+| GET /api/stocks | 200 OK, 15개 종목 |
+| GET /api/stocks/:id | 200 OK, KB금융, 28일 가격 히스토리 |
+
+### Troubleshooting Notes
+
+#### 2026-06-20: AuthResponse에 antBeans 필드 누락
+
+**증상**: `mobile/src/store/authStore.ts`에서 `result.antBeans` 접근 시 TypeScript 에러
+
+**원인**: `mobile/src/types/api.ts`의 `AuthResponse` 타입에 `antBeans` 필드가 누락되어 있었음. 서버는 정상적으로 반환하고 있었으나 모바일 타입 정의만 누락.
+
+**해결**: `AuthResponse`에 `antBeans: number` 필드 추가
+
+#### 2026-06-20: GET /api/users/me 404 에러
+
+**증상**: `GET /api/users/me` 호출 시 `{"error":{"code":"NOT_FOUND","message":"User not found"}}`
+
+**원인**: `/api/users/:id` 라우트가 `me`를 사용자 ID로 해석하여 DB 조회 실패. `/me` 전용 라우트가 없었음.
+
+**해결**: `UserController.getMyProfile()` 메서드를 추가하여 `req.userId`로 조회하도록 분리. `/api/users/me` 라우트를 `/:id` 라우트보다 먼저 등록.
+
+### 다음 단계
+
+1. Battle 도메인 API 설계 및 구현 (Phase 3)
+2. 종목 선택과 배틀 진행 화면 구현
+3. 배틀 종료, 보상, 랭크 점수 반영
