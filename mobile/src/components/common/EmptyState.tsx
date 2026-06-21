@@ -38,8 +38,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '500',
-    color: COLORS.textSecondary,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
     textAlign: 'center',
   },
   subtitle: {
