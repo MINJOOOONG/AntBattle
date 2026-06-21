@@ -12,13 +12,13 @@ interface ButtonProps {
 }
 
 export default function Button({ title, onPress, variant = 'primary', disabled, loading, style }: ButtonProps) {
-  const bgColor = variant === 'primary' ? COLORS.primary : variant === 'danger' ? COLORS.danger : 'transparent';
-  const textColor = variant === 'secondary' ? COLORS.primary : '#FFFFFF';
-  const borderColor = variant === 'secondary' ? COLORS.primary : 'transparent';
+  const bgColor = variant === 'primary' ? COLORS.clay : variant === 'danger' ? COLORS.danger : 'transparent';
+  const textColor = variant === 'secondary' ? COLORS.clay : '#FFFFFF';
+  const borderColor = variant === 'secondary' ? COLORS.borderSoft : 'transparent';
 
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: bgColor, borderColor, borderWidth: variant === 'secondary' ? 2 : 0, opacity: disabled ? 0.5 : 1 }, style]}
+      style={[styles.button, { backgroundColor: bgColor, borderColor, borderWidth: variant === 'secondary' ? 1.5 : 0, opacity: disabled ? 0.5 : 1 }, style]}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.7}
@@ -34,14 +34,14 @@ export default function Button({ title, onPress, variant = 'primary', disabled, 
 
 const styles = StyleSheet.create({
   button: {
-    height: 48,
-    borderRadius: 12,
+    height: 50,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
   text: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 });
