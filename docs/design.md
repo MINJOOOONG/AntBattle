@@ -1,283 +1,273 @@
 # Design
 
-개미배틀 앱의 디자인 가이드. 현재 구현은 Expo React Native 기반이며, 귀여운 소셜 게임 톤을 유지하되 실제 투자/도박 앱처럼 보이지 않도록 한다.
+개미배틀 앱의 디자인 가이드.
 
-## 톤앤매너
+## 전체 컨셉
 
-- 주식 수익률을 소재로 한 가벼운 소셜 게임
-- 개미 캐릭터가 앱의 주인공
-- 밝고 직관적인 모바일 UX
-- 증권앱처럼 딱딱하거나 도박앱처럼 자극적인 인상은 피한다
-- 투자 조언, 리딩방, 자동매매, 현금 보상처럼 오해될 표현을 쓰지 않는다
+개미배틀은 주식 수익률을 친구와 겨루는 캐주얼 캐릭터 배틀 앱이다.
+
+핵심 느낌:
+
+- 귀여운 개미 캐릭터가 앱의 주인공
+- 캐릭터 육성 앱 같은 따뜻함
+- 말랑한 카드 UI, 따뜻한 여백
+- 파스텔/뮤트톤 컬러
+- 숫자 정보는 깔끔하고 명확하게
+- 배틀 요소는 귀엽고 가볍게
+- 앱을 켜자마자 "내 개미가 있는 앱"처럼 느껴지게
+
+디자인 키워드: soft, clay, cozy, minimal, character-driven, gentle finance, casual battle, collectible ant, warm dashboard
 
 ## 디자인 원칙
 
 1. **게임 앱답게**: 금융 거래 앱이 아니라 친구와 겨루는 캐주얼 게임으로 보이게 한다.
 2. **캐릭터 중심**: 홈, 배틀, 프로필에서 개미 캐릭터를 명확한 시각 중심으로 둔다.
-3. **명확한 액션**: 주요 버튼은 48px 이상 높이와 충분한 터치 영역을 유지한다.
+3. **명확한 액션**: 주요 버튼은 50px 높이와 충분한 터치 영역을 유지한다.
 4. **모바일 우선**: 작은 화면에서 한 손 조작, 읽기 쉬운 여백, 짧은 문구를 우선한다.
 5. **안전한 카피**: 수익률은 게임 결과 지표로만 표현하고 매수/매도 유도 문구를 쓰지 않는다.
 
-## 현재 색상 토큰
+## 컬러 팔레트
 
 `mobile/src/constants/colors.ts` 기준.
 
-```typescript
-primary:       '#FF6B35'
-secondary:     '#FFD166'
-background:    '#FFF8F0'
-surface:       '#FFFFFF'
-textPrimary:   '#2D2D2D'
-textSecondary: '#888888'
+### Primary Palette
 
-gainRed:       '#FF4444'
-lossBue:       '#4488FF' // 현재 코드의 key 이름. 추후 lossBlue로 rename 검토
-neutral:       '#888888'
-
-border:        '#E0E0E0'
-disabled:      '#CCCCCC'
-danger:        '#FF4444'
-success:       '#4CAF50'
+```
+BLUSH:  #CFC0BB
+SKY:    #B2BCC5
+STONE:  #979178
+CLAY:   #987455
 ```
 
-한국 주식 시장 관습에 맞춰 상승은 빨간색, 하락은 파란색을 사용한다.
+### Neutral
+
+```
+Background:     #F8F5F1
+Surface:        #FFFFFF
+Surface Soft:   #F1ECE8
+Text Primary:   #3F3A36
+Text Secondary: #7C746D
+Border Soft:    #E5DDD7
+```
+
+### 수익률 (부드러운 톤, 한국 주식 관습 유지)
+
+```
+Gain Red:   #C75B5B
+Loss Blue:  #5B7FB5
+Neutral:    #7C746D
+```
+
+### UI
+
+```
+Border:    #E5DDD7
+Disabled:  #C9C1BA
+Danger:    #C75B5B
+Success:   #6B9E6B
+```
+
+사용 방향:
+
+- 전체 배경은 밝은 크림/웜화이트 계열
+- 주요 카드는 화이트 또는 연한 BLUSH/SKY tint
+- 기본 텍스트는 진한 브라운/스톤 계열
+- 포인트 버튼은 CLAY 또는 SKY
+- 보조 정보는 STONE 계열을 연하게 사용
+
+하지 말 것:
+
+- 쨍한 원색 사용 금지
+- 기본 React Native 파란색 버튼 느낌 금지
+- 차가운 증권 앱 느낌 금지
+- 네온/강한 그라데이션/과한 게임 UI 금지
 
 ## 랭크 색상
 
-```typescript
-rankBronze: '#CD7F32'
-rankSilver: '#C0C0C0'
-rankGold:   '#FFD700'
-rankFire:   '#FF4500'
-rankLimit:  '#9B59B6'
-rankKing:   '#E74C3C'
+```
+Bronze: #CD7F32
+Silver: #B0B0B0
+Gold:   #D4A843
+Fire:   #D4714E
+Limit:  #8E6BA5
+King:   #C75B5B
 ```
 
 ## 타이포그래피
 
-React Native 기본 폰트를 사용한다. 텍스트는 화면 밀도에 맞춰 과도하게 크게 쓰지 않는다.
+React Native 기본 폰트를 사용한다.
 
 | 용도 | 권장 |
 |------|------|
-| 화면 제목 | 22-24px, bold |
-| 섹션 제목 | 18-20px, bold |
+| 화면 제목 | 22-24px, 700 |
+| 섹션 제목 | 18px, 700 |
 | 본문 | 15-16px |
 | 보조 텍스트 | 13-14px |
-| 수익률/잔액 강조 | 24-28px, bold |
+| 수익률/잔액 강조 | 24-28px, 700 |
 
-## 컴포넌트 규칙
+## 개미 캐릭터
 
-### Button
+`mobile/src/components/ant/AntCharacter.tsx`
 
-현재 공통 버튼은 `mobile/src/components/common/Button.tsx`다.
+View 기반 클레이 개미 캐릭터:
 
-- 높이: 48px
-- borderRadius: 12px
-- variant: `primary`, `secondary`, `danger`
-- loading 상태는 ActivityIndicator 표시
-- disabled 상태는 opacity 0.5
-
-### Card
-
-아직 별도 공통 Card 컴포넌트는 없다. 화면 내부에서 카드형 컨테이너를 만들 때는 다음을 기본값으로 한다.
-
-- 배경: `COLORS.surface`
-- border: `COLORS.border`
-- borderRadius: 12-16px
-- padding: 16px
-- 그림자는 과하지 않게 사용
-
-### AntCharacter
-
-현재 `mobile/src/components/ant/AntCharacter.tsx`는 이모지 기반 캐릭터다.
-
-- size: `small` 48, `medium` 80, `large` 120
-- scale prop으로 배틀 우세/열세를 표현 (Animated.timing 300ms easeInOut)
+- 큰 둥근 머리 (C4B5A5)
+- 동그란 눈 2개 (3F3A36)
+- 작은 미소
+- 둥근 더듬이 2개 (8B7D6B)
+- 작은 몸통 (B8A896)
+- 짧고 둥근 팔다리 (A89888)
+- 전체적으로 회갈색/스톤/클레이 톤
+- size: small(48), medium(80), large(120), hero(160)
+- scale prop으로 배틀 우세/열세 표현 (Animated.timing 300ms easeInOut)
 - rankScore 기반 border color
-- 장착 아이템은 hat/glasses/expression 이모지 우선 표시
-- scale 변경 시 `useNativeDriver: true`로 성능 최적화
+- 장착 아이템: hat/glasses/expression 이모지로 위치에 표시
+- 나중에 꾸미기 아이템 확장 가능한 구조
 
-추후 일러스트나 SVG로 바꾸더라도 props 계약은 최대한 유지한다.
+## 공통 컴포넌트
 
-### EmptyState
+### SoftCard
 
-`mobile/src/components/common/EmptyState.tsx`
+`mobile/src/components/common/SoftCard.tsx`
 
-- Props: `emoji`, `title`, `subtitle?`, `actionLabel?`, `onAction?`
-- 데이터가 없는 화면에서 재사용 (친구 목록, 배틀 목록, 인벤토리 등)
-- 중앙 정렬, 이모지 크게, 선택적 CTA 버튼
+- borderRadius: 20
+- 부드러운 그림자 (shadowOpacity 0.06)
+- variant: 'surface' (흰색) | 'soft' (연한 크림)
+- padding: 20
 
-### LoadingView
+### PastelButton
 
-`mobile/src/components/common/LoadingView.tsx`
+`mobile/src/components/common/PastelButton.tsx`
 
-- Props: `message?` (기본: "로딩 중...")
-- 전체 화면 로딩용 ActivityIndicator + 메시지
+- variant: 'clay' | 'sky' | 'blush' | 'ghost'
+- borderRadius: 16, height: 50
+- 말랑한 색상, 원색 금지
 
-### ErrorView
+### StatusBadge
 
-`mobile/src/components/common/ErrorView.tsx`
+`mobile/src/components/common/StatusBadge.tsx`
 
-- Props: `message`, `onRetry?`
-- 에러 이모지 + 메시지 + 선택적 "다시 시도" 버튼
+- 배틀 상태를 둥근 스티커처럼 표시
+- 상태별 색상 매핑
 
-### SafetyDisclaimer
+### CharacterBubble
 
-`mobile/src/components/common/SafetyDisclaimer.tsx`
+`mobile/src/components/common/CharacterBubble.tsx`
 
-- Props 없음 (고정 문구)
-- 안전 문구를 한곳에서 관리, 여러 화면에서 재사용
+- 개미 캐릭터 위/옆에 말풍선
+- surfaceSoft 배경
 
-### MiniBarChart
+### StatPill
 
-`mobile/src/components/chart/MiniBarChart.tsx`
+`mobile/src/components/common/StatPill.tsx`
 
-- Props: `data: { label, value, color }[]`, `height?`
-- react-native-svg 기반 SVG 막대 차트
-- 승/패/무 전적 시각화용
+- 작은 둥근 알약 형태
+- 라벨 + 값
 
-## 구현된 화면
+### SectionHeader
 
-### Auth Stack
+`mobile/src/components/common/SectionHeader.tsx`
 
-- **SplashScreen**: 앱 로고 + 안전 문구(SafetyDisclaimer), 1.5초 후 Login으로 이동
-- **LoginScreen**: handle + password 입력, Button.loading 상태, Alert 에러 표시
-- **SignupScreen**: email, nickname, handle, password, confirm 입력
+- 섹션 제목 + 선택적 부제목/액션 버튼
 
-### Main Tab
+### Button (기존)
 
-- **Home**: 프로필 카드(AntCharacter), 전적 요약, 연승 배너, 소셜 메뉴, SafetyDisclaimer
-- Battle placeholder
-- Shop placeholder
-- **MyPage**: 프로필, 개미콩 잔액, 전적(MiniBarChart), 로그아웃, SafetyDisclaimer
+`mobile/src/components/common/Button.tsx`
 
-### Social Stack
+- height: 50, borderRadius: 16
+- variant: primary(clay), secondary(ghost), danger
+- 새 버튼은 PastelButton 권장
 
-- **FriendSearchScreen**: handle 검색, 친구 요청 전송
-- **FriendListScreen**: 탭(친구/요청), EmptyState 컴포넌트, RefreshControl, 수락/거절
+### EmptyState, LoadingView, ErrorView, SafetyDisclaimer (기존)
 
-### 상태 처리
+컬러 팔레트 자동 반영.
 
-| 화면 | 로딩 | 에러 | 빈 상태 |
-|------|------|------|--------|
-| HomeScreen | LoadingView | - | - |
-| MyPageScreen | LoadingView | - | - |
-| FriendListScreen | RefreshControl | - | EmptyState |
-| FriendSearchScreen | isLoading | Alert | 인라인 |
-| LoginScreen | Button.loading | Alert | - |
-| SignupScreen | Button.loading | Alert | - |
-| SplashScreen | 타이머 | - | - |
+## 문구 톤
 
-## 예정 화면 가이드
+앱 문구는 귀엽고 가벼운 톤. 딱딱한 금융 서비스 말투 금지.
 
-### Battle
+예시 변환:
 
-핵심 시각 구조:
+- "배틀 신청" → "친구 개미에게 도전하기"
+- "종목 선택" → "내 개미가 들고 뛸 종목 고르기"
+- "진행 중인 배틀" → "겨루는 중"
+- "결과 보기" → "승부 결과 보러가기"
+- "참가비" → "도전 참가비"
+- "상대방 응답 대기 중" → "친구 개미의 답장을 기다리는 중이에요"
+- "데이터 없음" → "아직 열린 승부가 없어요"
 
-```
-상단: 상대, 남은 시간, 상태
-중앙: 양쪽 개미 캐릭터 크기 비교
-하단: 선택 종목, 현재가, 수익률, 간단한 흐름
-```
-
-배틀 화면에서 금지할 표현:
-
-- 베팅
-- 판돈
-- 올인
-- 매수 추천
-- 이 종목 사세요
-- 수익 보장
-
-허용 가능한 표현:
-
-- 배틀 신청
-- 종목 선택
-- 현재 우세
-- 반등 기도 중
-- 개미콩 보상
-
-### Shop
-
-아이템 카테고리:
-
-- hat
-- glasses
-- expression
-- outfit
-- background
-- title
-
-구매는 유저 간 재화 이동이 아니라 시스템 상점 구매다. 개미콩을 현금성 가치처럼 표현하지 않는다.
-
-### MyPage
-
-표시 우선순위:
-
-1. 내 개미 캐릭터
-2. nickname, handle
-3. 랭크와 전적
-4. 개미콩 잔액
-5. 안전 문구와 로그아웃
+주의: 너무 유치한 말투는 피하고, 금융 정보와 안전 고지는 명확하게 유지.
 
 ## 마이크로카피
 
 ### 홈
 
-- "개미 입장 완료"
-- "오늘은 누구 종목이 더 잘 버틸까?"
-- "친구와 수익률 배틀을 시작해보세요"
-
-### 친구
-
-- "개미 친구를 찾아볼까요?"
-- "이미 친구 요청을 보냈어요"
-- "친구가 되면 배틀을 신청할 수 있어요"
-
-### 종목 선택
-
-- "종목 고르는 중... 신중한 척하는 중"
-- "이 종목으로 배틀할까요?"
-- "상대가 고른 종목은 아직 비밀이에요"
+- "오늘도 장이 열렸어요"
+- "오늘은 어떤 승부를 해볼까요?"
+- "오늘은 신중하게 골라볼까요?"
+- "친구 개미랑 한 판 붙어볼까요?"
 
 ### 배틀 진행
 
 - "현재 우세!"
 - "떡상 개미 출몰!"
 - "반등 기도 중..."
-- "물림 주의"
-- "역전! 개미판 뒤집혔다!"
+- "역전을 노려보자!"
+- "팽팽한 접전!"
 
 ### 배틀 결과
 
-- "개미콩 +100 획득!"
-- "참가 보상 +20"
-- "무승부! 둘 다 비슷한 개미"
 - "오늘의 개미왕 등극!"
+- "다음엔 꼭 이기자!"
+- "둘 다 비슷한 개미"
 
 ### 빈 상태
 
-- 친구 없음: "아직 친구가 없어요. 개미 친구를 찾아볼까요?"
-- 배틀 없음: "진행 중인 배틀이 없어요. 배틀을 신청해볼까요?"
-- 아이템 없음: "아직 아이템이 없어요. 배틀에서 개미콩을 모아보세요."
+- 배틀: "아직 열린 승부가 없어요. 친구 개미에게 도전해볼까요?"
+- 친구: "아직 친구 개미가 없어요"
+
+## 화면 구조
+
+### HomeScreen
+
+1. 인사 영역 ("민두개미, 오늘도 장이 열렸어요")
+2. 메인 캐릭터 영역 (AntCharacter hero + CharacterBubble)
+3. 상태 카드 (SoftCard + StatPill: 개미콩, 랭크, 전적)
+4. CTA 버튼 (PastelButton)
+5. SafetyDisclaimer
+
+### BattleListScreen
+
+- 헤더: "내 개미의 승부장" + 작은 개미
+- 필터 탭: 전체/겨루는 중/대기 중/끝난 승부 (둥근 칩)
+- 배틀 카드: SoftCard + StatusBadge
+- CTA: "친구 개미에게 도전하기"
+
+### BattleRequestScreen → "도전장 보내기"
+
+### PeriodNegotiationScreen → "기간 정하기"
+
+### StockSelectScreen → "종목 고르기"
+
+### BattleProgressScreen → "겨루는 중"
+
+### BattleResultScreen → "승부 결과"
 
 ## 애니메이션
 
 ### 개미 크기 변화
 
-- AntCharacter `scale` prop 사용, `Animated.timing`으로 구현 완료
-- 300ms easeInOut, `useNativeDriver: true`
+- AntCharacter `scale` prop, `Animated.timing` 300ms easeInOut
 - 수익률 차이에 따라 0.75-1.4 범위로 clamp
-- scale prop 변경 시 자동 애니메이션 트리거
-
-### 화면 전환
-
-- Auth/Main 전환은 RootNavigator에서 인증 상태 기준으로 분기
-- Stack 화면은 기본 native stack 전환
-- Tab은 React Navigation bottom tabs 사용
+- `useNativeDriver: true`
 
 ## 안전 문구
 
-앱 내 적절한 위치에 다음 문구를 유지한다.
-
 > 개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다. 표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
+
+## 금지 표현
+
+- 베팅, 판돈, 올인
+- 매수 추천, 이 종목 사세요
+- 수익 보장, 따라 사기
+- 주식맞짱 (서비스 이름은 "개미배틀"만 사용)
