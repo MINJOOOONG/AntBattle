@@ -114,10 +114,10 @@ npx prisma generate
 npm run db:seed              # mock 데이터 삽입 (최초 1회)
 npm run dev                  # http://localhost:3000
 
-# 3. 모바일 실행
+# 3. 맥북 브라우저에서 앱 실행
 cd mobile
 npm install
-npx expo start
+npm start                 # http://localhost:8081
 ```
 
 ### 테스트 계정

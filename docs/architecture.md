@@ -351,12 +351,10 @@ npm run build
 npm run typecheck
 npm run db:seed
 
-# 모바일
+# 맥북 브라우저 앱
 cd mobile
 npm install
 npm start
-npm run ios
-npm run android
 ```
 
 ## Migration 운영 원칙
