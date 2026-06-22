@@ -17,11 +17,12 @@ const TAB_ICONS = {
 } satisfies Record<string, ImageSourcePropType>;
 
 function TabImageIcon({ source, focused }: { source: ImageSourcePropType; focused: boolean }) {
+  const opacity = focused ? 1 : 0.5;
   return (
     <View style={styles.iconWrap}>
       <Image
         source={source}
-        style={[styles.tabIcon, focused ? styles.activeIcon : styles.inactiveIcon]}
+        style={[styles.tabIcon, { opacity }]}
         resizeMode="contain"
       />
     </View>
@@ -35,7 +36,8 @@ export default function MainTabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: '#f2f3f5',
+          position: 'absolute',
+          backgroundColor: 'transparent',
           borderTopWidth: 0,
           height: 64,
           paddingBottom: 8,

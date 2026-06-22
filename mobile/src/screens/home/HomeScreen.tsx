@@ -1,10 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image, ImageSourcePropType } from 'react-native';
 import { HOME_COLORS } from '../../constants/colors';
 import { useAuthStore } from '../../store/authStore';
 import { useBGMControl } from '../../hooks/useBGM';
 import ClayAntCharacter from '../../components/ant/ClayAntCharacter';
 import LoadingView from '../../components/common/LoadingView';
+
+/** 아이콘 이미지 컴포넌트 */
+function IconImg({ source, size, style }: { source: ImageSourcePropType; size: number; style?: object }) {
+  return (
+    <Image
+      source={source}
+      style={[{ width: size, height: size }, style]}
+      resizeMode="contain"
+    />
+  );
+}
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -89,7 +100,7 @@ export default function HomeScreen(_props: HomeScreenProps) {
       {/* 배경 이미지 */}
       <View style={styles.backgroundWrap} pointerEvents="none">
         <Image
-          source={require('../../../assets/backgrounds/home-background-3.png')}
+          source={require('../../../assets/backgrounds/home-background-2.png')}
           style={styles.backgroundImage}
           resizeMode="cover"
         />
@@ -105,17 +116,16 @@ export default function HomeScreen(_props: HomeScreenProps) {
         </View>
         <View style={styles.topBarRight}>
           <Pressable onPress={toggleBGM} style={styles.soundBtn} hitSlop={8}>
-            <Image
+            <IconImg
               source={require('../../../assets/icons/sound.png')}
-              style={[styles.soundIcon, !isPlaying && { opacity: 0.4 }]}
-              resizeMode="contain"
+              size={42}
+              style={!isPlaying ? { opacity: 0.4 } : undefined}
             />
           </Pressable>
           <View style={styles.beanBadge}>
-            <Image
+            <IconImg
               source={require('../../../assets/icons/antbean.png')}
-              style={styles.beanIcon}
-              resizeMode="contain"
+              size={42}
             />
             <Text style={styles.beanValue}>{antBeans.toLocaleString()}</Text>
           </View>
@@ -169,7 +179,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 56,
-    paddingBottom: 8,
+    paddingBottom: 72,
   },
 
   // ── 상단 바 ──
@@ -189,7 +199,7 @@ const styles = StyleSheet.create({
   },
   greetingSub: {
     fontSize: 13,
-    color: HC.textMuted,
+    color: '#5F5750',
     marginTop: 3,
   },
   topBarRight: {
@@ -202,20 +212,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
-  soundIcon: {
-    width: 42,
-    height: 42,
-    backgroundColor: 'transparent',
-  },
   beanBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'transparent',
-  },
-  beanIcon: {
-    width: 42,
-    height: 42,
     backgroundColor: 'transparent',
   },
   beanValue: {
@@ -275,10 +275,15 @@ const styles = StyleSheet.create({
 
   // ── 면책조항 (홈 전용) ──
   disclaimer: {
-    fontSize: 10,
-    color: HC.border,
+    fontSize: 11,
+    color: '#4A4036',
     textAlign: 'center',
-    lineHeight: 14,
-    paddingHorizontal: 16,
+    lineHeight: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginHorizontal: 4,
   },
 });
