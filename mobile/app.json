@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "AntBattle",
+    "slug": "ant-battle",
+    "version": "1.0.0",
+    "icon": "./assets/favicon.png",
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}
