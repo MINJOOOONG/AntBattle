@@ -1,6 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { getRankColor } from '../../constants/ranks';
+import { Animated, Easing, StyleSheet, Text } from 'react-native';
+import Svg, {
+  Circle,
+  Defs,
+  Ellipse,
+  G,
+  Path,
+  RadialGradient,
+  Stop,
+} from 'react-native-svg';
 
 interface AntCharacterProps {
   scale?: number;
@@ -18,27 +26,69 @@ const SIZE_MAP = {
   hero: 160,
 };
 
-// 클레이 개미 색상
 const ANT = {
-  head: '#C4B5A5',
-  body: '#B8A896',
-  limb: '#A89888',
-  antenna: '#8B7D6B',
-  eye: '#3F3A36',
-  mouth: '#A08E7C',
+  headLight: '#CFC4BA',
+  head: '#B8AAA0',
+  headShade: '#9F9188',
+  bodyLight: '#B8AAA0',
+  body: '#8F8178',
+  bodyDark: '#736960',
+  detail: '#6C625A',
+  face: '#27231F',
+  mouth: '#5F524B',
+  blush: '#D4A9A4',
+  shadow: '#9A8F86',
 };
+
+const FUR_SPECKS = [
+  [20, 37, 1.8, 0.1],
+  [24, 48, 1.5, 0.08],
+  [26, 59, 1.6, 0.08],
+  [31, 29, 1.5, 0.08],
+  [34, 43, 1.2, 0.07],
+  [37, 52, 1.2, 0.07],
+  [40, 24, 1.1, 0.06],
+  [47, 19, 1.2, 0.05],
+  [53, 25, 1.1, 0.05],
+  [60, 31, 1.2, 0.06],
+  [66, 43, 1.4, 0.07],
+  [72, 57, 1.7, 0.07],
+  [77, 47, 1.5, 0.08],
+  [73, 33, 1.8, 0.08],
+  [38, 83, 1.3, 0.06],
+  [45, 91, 1.3, 0.07],
+  [53, 103, 1.6, 0.07],
+  [61, 90, 1.4, 0.06],
+  [66, 79, 1.2, 0.06],
+  [31, 101, 1.5, 0.06],
+] as const;
+
+const EDGE_PUFFS = [
+  [18, 45, 8, 12, 0.1],
+  [24, 26, 9, 8, 0.1],
+  [47, 15, 16, 5, 0.08],
+  [74, 27, 9, 8, 0.1],
+  [82, 47, 8, 12, 0.1],
+  [27, 71, 10, 7, 0.09],
+  [73, 71, 10, 7, 0.09],
+  [33, 116, 5, 7, 0.08],
+  [67, 116, 5, 7, 0.08],
+] as const;
+
+let nextGradientId = 0;
 
 export default function AntCharacter({
   scale = 1,
-  rankScore = 0,
+  rankScore,
   equippedHat,
   equippedGlasses,
   equippedExpression,
   size = 'medium',
 }: AntCharacterProps) {
   const baseSize = SIZE_MAP[size];
-  const rankColor = getRankColor(rankScore);
   const animatedScale = useRef(new Animated.Value(scale)).current;
+  const gradientId = useRef(nextGradientId++).current;
+  void rankScore;
 
   useEffect(() => {
     Animated.timing(animatedScale, {
@@ -47,111 +97,145 @@ export default function AntCharacter({
       easing: Easing.inOut(Easing.ease),
       useNativeDriver: true,
     }).start();
-  }, [scale]);
+  }, [animatedScale, scale]);
 
-  const head = baseSize * 0.55;
-  const body = baseSize * 0.34;
-  const eye = Math.max(3, head * 0.13);
-  const antennaH = head * 0.28;
-  const antennaW = Math.max(2, head * 0.045);
-  const ball = Math.max(4, head * 0.1);
-  const limb = Math.max(4, body * 0.2);
+  const svgW = baseSize;
+  const svgH = baseSize * 1.28;
+  const accessorySize = Math.max(14, baseSize * 0.24);
+  const headGradient = `cottonHead${gradientId}`;
+  const bodyGradient = `cottonBody${gradientId}`;
+  const shadowGradient = `cottonShadow${gradientId}`;
 
   return (
     <Animated.View
       style={[
         styles.outer,
-        { width: baseSize, height: baseSize * 1.1, transform: [{ scale: animatedScale }] },
+        {
+          width: svgW,
+          height: svgH,
+          transform: [{ scale: animatedScale }],
+        },
       ]}
     >
-      {/* 장착 모자 */}
       {equippedHat && (
-        <Text style={{ fontSize: head * 0.35, position: 'absolute', top: 0, zIndex: 10 }}>
-          {equippedHat}
-        </Text>
+        <Text style={[styles.hat, { fontSize: accessorySize }]}>{equippedHat}</Text>
       )}
 
-      {/* 더듬이 */}
-      <View style={styles.antennaeRow}>
-        {/* 왼쪽 */}
-        <View style={{ alignItems: 'center' }}>
-          <View style={[styles.ball, { width: ball, height: ball }]} />
-          <View style={[styles.stem, { height: antennaH, width: antennaW, transform: [{ rotate: '-12deg' }] }]} />
-        </View>
-        <View style={{ width: head * 0.3 }} />
-        {/* 오른쪽 */}
-        <View style={{ alignItems: 'center' }}>
-          <View style={[styles.ball, { width: ball, height: ball }]} />
-          <View style={[styles.stem, { height: antennaH, width: antennaW, transform: [{ rotate: '12deg' }] }]} />
-        </View>
-      </View>
+      <Svg width={svgW} height={svgH} viewBox="0 0 100 128">
+        <Defs>
+          <RadialGradient id={headGradient} cx="43%" cy="36%" rx="58%" ry="58%">
+            <Stop offset="0%" stopColor={ANT.headLight} />
+            <Stop offset="62%" stopColor={ANT.head} />
+            <Stop offset="100%" stopColor={ANT.headShade} />
+          </RadialGradient>
+          <RadialGradient id={bodyGradient} cx="39%" cy="20%" rx="62%" ry="74%">
+            <Stop offset="0%" stopColor={ANT.bodyLight} />
+            <Stop offset="48%" stopColor={ANT.body} />
+            <Stop offset="100%" stopColor={ANT.bodyDark} />
+          </RadialGradient>
+          <RadialGradient id={shadowGradient} cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="0%" stopColor={ANT.shadow} stopOpacity={0.18} />
+            <Stop offset="100%" stopColor={ANT.shadow} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
 
-      {/* 머리 */}
-      <View
-        style={[
-          styles.head,
-          {
-            width: head,
-            height: head,
-            borderRadius: head / 2,
-            borderColor: rankColor,
-          },
-        ]}
-      >
-        {/* 눈 */}
-        <View style={styles.eyeRow}>
-          <View style={[styles.eye, { width: eye, height: eye, borderRadius: eye / 2 }]} />
-          <View style={{ width: eye * 1.5 }} />
-          <View style={[styles.eye, { width: eye, height: eye, borderRadius: eye / 2 }]} />
-        </View>
-        {/* 표정 */}
-        {equippedExpression ? (
-          <Text style={{ fontSize: head * 0.2, marginTop: 1 }}>{equippedExpression}</Text>
-        ) : (
-          <View
-            style={{
-              width: head * 0.2,
-              height: head * 0.1,
-              backgroundColor: ANT.mouth,
-              borderBottomLeftRadius: head * 0.1,
-              borderBottomRightRadius: head * 0.1,
-              marginTop: 2,
-            }}
+        <Ellipse cx="50" cy="121" rx="25" ry="4.5" fill={`url(#${shadowGradient})`} />
+
+        <Path
+          d="M 37 31 C 34 17 29 12 22 10"
+          stroke={ANT.detail}
+          strokeWidth="3.4"
+          strokeLinecap="round"
+          fill="none"
+          opacity={0.58}
+        />
+        <Path
+          d="M 63 31 C 66 17 71 12 78 10"
+          stroke={ANT.detail}
+          strokeWidth="3.4"
+          strokeLinecap="round"
+          fill="none"
+          opacity={0.58}
+        />
+        <Circle cx="22" cy="10" r="6.3" fill={ANT.headShade} opacity={0.2} />
+        <Circle cx="78" cy="10" r="6.3" fill={ANT.headShade} opacity={0.2} />
+        <Circle cx="22" cy="10" r="4.9" fill={ANT.headShade} opacity={0.76} />
+        <Circle cx="78" cy="10" r="4.9" fill={ANT.headShade} opacity={0.76} />
+
+        <Ellipse cx="35" cy="88" rx="7.4" ry="10" fill={ANT.headLight} opacity={0.36} />
+        <Ellipse cx="65" cy="88" rx="7.4" ry="10" fill={ANT.headLight} opacity={0.36} />
+        <Ellipse cx="50" cy="95" rx="21" ry="28" fill={`url(#${bodyGradient})`} />
+        <Ellipse cx="50" cy="77" rx="22" ry="8" fill={ANT.bodyDark} opacity={0.12} />
+        <Ellipse cx="34" cy="116" rx="5.6" ry="8" fill={ANT.bodyDark} opacity={0.48} />
+        <Ellipse cx="66" cy="116" rx="5.6" ry="8" fill={ANT.bodyDark} opacity={0.48} />
+
+        <G opacity={0.48}>
+          <Ellipse cx="50" cy="50" rx="38" ry="35" fill={ANT.headLight} opacity={0.3} />
+          <Ellipse cx="50" cy="51" rx="36" ry="34" fill={ANT.head} opacity={0.38} />
+          {EDGE_PUFFS.map(([cx, cy, rx, ry, opacity], index) => (
+            <Ellipse
+              key={`puff-${index}`}
+              cx={cx}
+              cy={cy}
+              rx={rx}
+              ry={ry}
+              fill={ANT.headLight}
+              opacity={opacity}
+            />
+          ))}
+        </G>
+        <Ellipse cx="50" cy="51" rx="34.5" ry="32.5" fill={`url(#${headGradient})`} />
+
+        <Ellipse cx="36" cy="61" rx="7.6" ry="4.4" fill={ANT.blush} opacity={0.18} />
+        <Ellipse cx="64" cy="61" rx="7.6" ry="4.4" fill={ANT.blush} opacity={0.18} />
+        <Circle cx="41.6" cy="55.2" r="4.1" fill={ANT.face} opacity={0.94} />
+        <Circle cx="58.4" cy="55.2" r="4.1" fill={ANT.face} opacity={0.94} />
+
+        {equippedExpression ? null : (
+          <Path
+            d="M 45.8 63 C 48.1 66.2 51.9 66.2 54.2 63"
+            stroke={ANT.mouth}
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            fill="none"
+            opacity={0.82}
           />
         )}
-        {/* 장착 안경 */}
-        {equippedGlasses && (
-          <Text style={{ position: 'absolute', top: head * 0.22, fontSize: head * 0.26 }}>
-            {equippedGlasses}
-          </Text>
-        )}
-      </View>
 
-      {/* 몸통 + 팔 */}
-      <View style={{ alignItems: 'center', marginTop: -body * 0.06 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* 왼팔 */}
-          <View style={[styles.limbCircle, { width: limb, height: limb, borderRadius: limb / 2, marginRight: -limb * 0.15 }]} />
-          {/* 몸통 */}
-          <View
-            style={{
-              width: body,
-              height: body * 0.72,
-              borderRadius: body * 0.36,
-              backgroundColor: ANT.body,
-            }}
-          />
-          {/* 오른팔 */}
-          <View style={[styles.limbCircle, { width: limb, height: limb, borderRadius: limb / 2, marginLeft: -limb * 0.15 }]} />
-        </View>
-      </View>
+        <G>
+          {FUR_SPECKS.map(([cx, cy, r, opacity], index) => (
+            <Circle
+              key={`light-${index}`}
+              cx={cx}
+              cy={cy}
+              r={r}
+              fill="#FFFFFF"
+              opacity={opacity}
+            />
+          ))}
+          {FUR_SPECKS.map(([cx, cy, r, opacity], index) => (
+            <Circle
+              key={`dark-${index}`}
+              cx={100 - cx}
+              cy={cy + 1}
+              r={r * 0.85}
+              fill={ANT.bodyDark}
+              opacity={opacity * 0.58}
+            />
+          ))}
+        </G>
+      </Svg>
 
-      {/* 다리 */}
-      <View style={styles.legRow}>
-        <View style={[styles.limbCircle, { width: limb, height: limb, borderRadius: limb / 2 }]} />
-        <View style={{ width: body * 0.25 }} />
-        <View style={[styles.limbCircle, { width: limb, height: limb, borderRadius: limb / 2 }]} />
-      </View>
+      {equippedExpression && (
+        <Text style={[styles.expression, { fontSize: baseSize * 0.14 }]}>
+          {equippedExpression}
+        </Text>
+      )}
+      {equippedGlasses && (
+        <Text style={[styles.glasses, { fontSize: baseSize * 0.24 }]}>
+          {equippedGlasses}
+        </Text>
+      )}
     </Animated.View>
   );
 }
@@ -160,40 +244,23 @@ const styles = StyleSheet.create({
   outer: {
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
   },
-  antennaeRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: -1,
+  hat: {
+    position: 'absolute',
+    top: -4,
+    zIndex: 3,
   },
-  ball: {
-    backgroundColor: ANT.antenna,
-    borderRadius: 999,
+  glasses: {
+    position: 'absolute',
+    top: '35%',
+    zIndex: 3,
   },
-  stem: {
-    backgroundColor: ANT.antenna,
-    borderRadius: 2,
-  },
-  head: {
-    backgroundColor: ANT.head,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2.5,
-    zIndex: 2,
-  },
-  eyeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  eye: {
-    backgroundColor: ANT.eye,
-  },
-  limbCircle: {
-    backgroundColor: ANT.limb,
-  },
-  legRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: -1,
+  expression: {
+    color: ANT.mouth,
+    fontWeight: '700',
+    position: 'absolute',
+    top: '48%',
+    zIndex: 3,
   },
 });
