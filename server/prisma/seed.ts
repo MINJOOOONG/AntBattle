@@ -34,10 +34,11 @@ const MOCK_ITEMS = [
   { name: '빨간불 선글라스', category: 'glasses', price: 120, rarity: 'rare', emoji: '🕶️', description: '빨간불만 보이는 마법 안경' },
   { name: '눈물 고글', category: 'glasses', price: 80, rarity: 'common', emoji: '😭', description: '물릴 때 필수템' },
   // 표정
-  { name: '떡상 미소', category: 'expression', price: 70, rarity: 'common', emoji: '😄', description: '수익 날 때의 표정' },
-  { name: '물림 눈물', category: 'expression', price: 70, rarity: 'common', emoji: '😢', description: '손절 직전의 표정' },
-  { name: '반등 기도', category: 'expression', price: 90, rarity: 'rare', emoji: '🙏', description: '제발 반등해주세요...' },
-  { name: '무념무상', category: 'expression', price: 150, rarity: 'epic', emoji: '😶', description: '차트를 초월한 경지' },
+  { name: '무표정', category: 'expression', price: 10, rarity: 'common', emoji: 'face_blank', description: '아무 생각 없는 개미 얼굴' },
+  { name: '능글미소', category: 'expression', price: 10, rarity: 'common', emoji: 'face_smirk', description: '다 알고 있다는 표정' },
+  { name: '정색', category: 'expression', price: 10, rarity: 'common', emoji: 'face_angry', description: '손절 버튼 앞의 표정' },
+  { name: '깜놀', category: 'expression', price: 10, rarity: 'common', emoji: 'face_shock', description: '급등락을 본 표정' },
+  { name: '눈물', category: 'expression', price: 10, rarity: 'common', emoji: 'face_cry', description: '물린 개미의 표정' },
   // 의상
   { name: '정장 개미', category: 'outfit', price: 100, rarity: 'rare', emoji: '👔', description: '여의도 증권맨 룩' },
   { name: '불장 개미', category: 'outfit', price: 200, rarity: 'epic', emoji: '🦺', description: '불장 생존 장비' },
@@ -99,6 +100,7 @@ async function main() {
   console.log(`Seeded ${MOCK_STOCKS.length} stocks with price history`);
 
   // 아이템 데이터 삽입 (기존 데이터 삭제 후 재생성)
+  await prisma.userItem.deleteMany({});
   await prisma.antItem.deleteMany({});
   await prisma.antItem.createMany({ data: MOCK_ITEMS });
 

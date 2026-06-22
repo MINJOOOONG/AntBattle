@@ -13,6 +13,8 @@ interface AuthState {
   login: (handle: string, password: string) => Promise<void>;
   loadSession: () => Promise<void>;
   logout: () => Promise<void>;
+  patchUser: (patch: Partial<User>) => void;
+  setAntBeans: (antBeans: number) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -66,5 +68,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     await authService.logout();
     set({ user: null, token: null, antBeans: 0, isAuthenticated: false });
+  },
+
+  patchUser: (patch) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...patch } : state.user,
+    }));
+  },
+
+  setAntBeans: (antBeans) => {
+    set({ antBeans });
   },
 }));

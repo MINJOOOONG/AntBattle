@@ -102,6 +102,10 @@ export interface EquipRequest {
   userItemId: string;
 }
 
+export interface EquipResponse {
+  user: Partial<User>;
+}
+
 // Ranking
 export interface RankEntry {
   rank: number;

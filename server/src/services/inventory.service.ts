@@ -24,6 +24,8 @@ const CATEGORY_TO_FIELD: Record<string, string> = {
   title: 'equippedTitleId',
 };
 
+const EXPRESSION_PRICE = 10;
+
 export class InventoryService {
   /**
    * 상점 아이템 목록 조회.
@@ -34,10 +36,14 @@ export class InventoryService {
       where.category = category;
     }
 
-    return prisma.antItem.findMany({
+    const items = await prisma.antItem.findMany({
       where,
       orderBy: [{ category: 'asc' }, { price: 'asc' }],
     });
+
+    return items.map((item) => (
+      item.category === 'expression' ? { ...item, price: EXPRESSION_PRICE } : item
+    ));
   }
 
   /**
@@ -61,9 +67,11 @@ export class InventoryService {
     }
 
     // 개미콩 차감
+    const purchasePrice = item.category === 'expression' ? EXPRESSION_PRICE : item.price;
+
     await antBeanService.debit({
       userId,
-      amount: item.price,
+      amount: purchasePrice,
       type: 'item_purchase',
       referenceId: itemId,
       description: `아이템 구매: ${item.name}`,
