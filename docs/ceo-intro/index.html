@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="개미배틀 / AntBattle CEO 회사소개 1분 발표용 HTML 피피티">
+  <meta property="og:title" content="개미배틀 / AntBattle">
+  <meta property="og:description" content="친구들과 겨루는 주식 수익률 배틀 게임">
+  <meta property="og:type" content="website">
+  <title>개미배틀 / AntBattle CEO Intro</title>
+  <style>
+    :root {
+      --bg: #fff8ec;
+      --bg-2: #f7ebd5;
+      --ink: #2f2219;
+      --muted: #735f4b;
+      --brown: #7b4d2a;
+      --brown-dark: #4a2a18;
+      --bean: #f0b84e;
+      --bean-deep: #d88924;
+      --cream: #fffdf7;
+      --green: #2fa66a;
+      --green-soft: #dff4df;
+      --sky: #71b7d8;
+      --pink: #f3a1a1;
+      --line: rgba(92, 60, 35, 0.18);
+      --shadow: 0 22px 60px rgba(84, 49, 24, 0.16);
+      --radius: 8px;
+      --max: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      line-height: 1.55;
+      background:
+        radial-gradient(circle at top left, rgba(47, 166, 106, 0.16), transparent 34rem),
+        radial-gradient(circle at 88% 8%, rgba(113, 183, 216, 0.18), transparent 30rem),
+        linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 100%);
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      padding: 14px 0 10px;
+      backdrop-filter: blur(16px);
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      min-width: 168px;
+      gap: 10px;
+      font-weight: 900;
+      color: var(--brown-dark);
+    }
+
+    .mini-ant {
+      position: relative;
+      width: 34px;
+      height: 28px;
+      flex: 0 0 34px;
+    }
+
+    .mini-ant::before,
+    .mini-ant::after {
+      position: absolute;
+      content: "";
+      border-radius: 50%;
+      background: var(--brown);
+      box-shadow: inset -4px -5px 0 rgba(0, 0, 0, 0.08);
+    }
+
+    .mini-ant::before {
+      left: 2px;
+      top: 7px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .mini-ant::after {
+      right: 0;
+      top: 5px;
+      width: 23px;
+      height: 20px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 253, 247, 0.78);
+      box-shadow: 0 10px 30px rgba(84, 49, 24, 0.08);
+    }
+
+    .nav-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-pills a {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .nav-pills a:hover,
+    .nav-pills a:focus-visible {
+      outline: 0;
+      background: var(--brown);
+      color: #fff;
+    }
+
+    .script-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid rgba(74, 42, 24, 0.2);
+      border-radius: 999px;
+      background: var(--brown-dark);
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 12px 28px rgba(74, 42, 24, 0.18);
+    }
+
+    main {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      padding: 8px 0 72px;
+    }
+
+    .deck {
+      display: grid;
+      gap: 24px;
+    }
+
+    .slide {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(260px, 0.72fr);
+      gap: clamp(22px, 4vw, 52px);
+      min-height: min(720px, calc(100svh - 112px));
+      overflow: hidden;
+      padding: clamp(26px, 5vw, 64px);
+      border: 1px solid rgba(92, 60, 35, 0.16);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(145deg, rgba(255, 253, 247, 0.97), rgba(255, 247, 231, 0.92)),
+        var(--cream);
+      box-shadow: var(--shadow);
+      scroll-margin-top: 86px;
+    }
+
+    .slide::before {
+      position: absolute;
+      inset: auto -88px -128px auto;
+      width: 310px;
+      height: 310px;
+      content: "";
+      border-radius: 50%;
+      background: rgba(240, 184, 78, 0.2);
+    }
+
+    .slide::after {
+      position: absolute;
+      left: clamp(22px, 4vw, 48px);
+      bottom: 24px;
+      width: 108px;
+      height: 10px;
+      content: "";
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--bean), var(--green), var(--sky));
+      opacity: 0.52;
+    }
+
+    .slide-content,
+    .slide-visual {
+      position: relative;
+      z-index: 1;
+      align-self: center;
+    }
+
+    .slide-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: var(--bean-deep);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .slide-kicker::before {
+      width: 9px;
+      height: 9px;
+      content: "";
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 14px 0 0 var(--bean), 28px 0 0 var(--sky);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 18px;
+      color: var(--brown-dark);
+      font-size: 104px;
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      max-width: 760px;
+      margin-bottom: 20px;
+      color: var(--brown-dark);
+      font-size: 64px;
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 820px;
+      margin-bottom: 22px;
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1.22;
+      color: var(--ink);
+    }
+
+    .copy {
+      max-width: 720px;
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 21px;
+      font-weight: 650;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid rgba(123, 77, 42, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 253, 247, 0.76);
+      color: var(--brown);
+      font-size: 14px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .tag-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .slide-visual {
+      display: grid;
+      place-items: center;
+      min-height: 300px;
+    }
+
+    .mascot-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: min(100%, 390px);
+      aspect-ratio: 1;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.8), transparent 22%),
+        linear-gradient(160deg, rgba(240, 184, 78, 0.24), rgba(47, 166, 106, 0.12));
+      border: 1px solid rgba(123, 77, 42, 0.14);
+    }
+
+    .mascot-stage::before {
+      position: absolute;
+      right: 11%;
+      top: 13%;
+      width: 66px;
+      height: 48px;
+      content: "";
+      border-radius: 50%;
+      background: var(--bean);
+      transform: rotate(-18deg);
+      box-shadow: inset -8px -10px 0 rgba(216, 137, 36, 0.35);
+    }
+
+    .mascot-stage::after {
+      position: absolute;
+      left: 10%;
+      bottom: 12%;
+      content: "AntBattle";
+      color: rgba(74, 42, 24, 0.5);
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .ant {
+      position: relative;
+      width: 230px;
+      height: 250px;
+    }
+
+    .ant .body,
+    .ant .head,
+    .ant .belly {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #9a6338, #5d341e);
+      box-shadow: inset -14px -16px 0 rgba(0, 0, 0, 0.14), 0 18px 30px rgba(74, 42, 24, 0.2);
+    }
+
+    .ant .head {
+      top: 28px;
+      left: 58px;
+      width: 106px;
+      height: 94px;
+    }
+
+    .ant .body {
+      top: 100px;
+      left: 76px;
+      width: 92px;
+      height: 86px;
+    }
+
+    .ant .belly {
+      top: 154px;
+      left: 102px;
+      width: 88px;
+      height: 74px;
+      transform: rotate(17deg);
+    }
+
+    .eye {
+      position: absolute;
+      top: 58px;
+      width: 22px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .eye.left {
+      left: 88px;
+    }
+
+    .eye.right {
+      left: 125px;
+    }
+
+    .eye::after {
+      position: absolute;
+      left: 8px;
+      top: 9px;
+      width: 8px;
+      height: 10px;
+      content: "";
+      border-radius: 50%;
+      background: #231711;
+    }
+
+    .smile {
+      position: absolute;
+      left: 100px;
+      top: 91px;
+      width: 42px;
+      height: 22px;
+      border-bottom: 4px solid #2b1910;
+      border-radius: 50%;
+    }
+
+    .antenna,
+    .antenna::after {
+      position: absolute;
+      width: 55px;
+      height: 44px;
+      border-top: 4px solid var(--brown-dark);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .antenna.left {
+      top: 10px;
+      left: 57px;
+      transform: rotate(-26deg);
+    }
+
+    .antenna.right {
+      top: 10px;
+      left: 128px;
+      transform: scaleX(-1) rotate(-26deg);
+    }
+
+    .antenna::after {
+      right: -8px;
+      top: -8px;
+      width: 14px;
+      height: 14px;
+      border: 0;
+      background: var(--bean);
+    }
+
+    .leg {
+      position: absolute;
+      width: 70px;
+      height: 44px;
+      border-bottom: 5px solid var(--brown-dark);
+      border-radius: 50%;
+    }
+
+    .leg.l1 {
+      top: 118px;
+      left: 26px;
+      transform: rotate(22deg);
+    }
+
+    .leg.l2 {
+      top: 156px;
+      left: 34px;
+      transform: rotate(-8deg);
+    }
+
+    .leg.l3 {
+      top: 188px;
+      left: 58px;
+      transform: rotate(-30deg);
+    }
+
+    .leg.r1 {
+      top: 118px;
+      right: 20px;
+      transform: scaleX(-1) rotate(22deg);
+    }
+
+    .leg.r2 {
+      top: 156px;
+      right: 24px;
+      transform: scaleX(-1) rotate(-8deg);
+    }
+
+    .leg.r3 {
+      top: 188px;
+      right: 38px;
+      transform: scaleX(-1) rotate(-30deg);
+    }
+
+    .bean-bag {
+      position: absolute;
+      right: 22px;
+      bottom: 28px;
+      display: grid;
+      place-items: center;
+      width: 82px;
+      height: 82px;
+      border-radius: 32px 32px 44px 44px;
+      background: linear-gradient(160deg, #f3c869, #d88924);
+      color: #523112;
+      font-weight: 950;
+      transform: rotate(-10deg);
+      box-shadow: 0 15px 28px rgba(216, 137, 36, 0.26);
+    }
+
+    .visual-panel {
+      display: grid;
+      width: min(100%, 410px);
+      gap: 14px;
+    }
+
+    .metric {
+      display: grid;
+      gap: 8px;
+      padding: 18px;
+      border: 1px solid rgba(123, 77, 42, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 253, 247, 0.78);
+    }
+
+    .metric strong {
+      font-size: 30px;
+      line-height: 1.1;
+      color: var(--brown-dark);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 750;
+    }
+
+    .flow {
+      display: grid;
+      gap: 12px;
+      width: min(100%, 420px);
+    }
+
+    .flow-step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid rgba(74, 42, 24, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 253, 247, 0.82);
+      color: var(--brown-dark);
+      font-weight: 850;
+    }
+
+    .flow-step b {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .bean-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      width: min(100%, 420px);
+    }
+
+    .bean-item {
+      min-height: 124px;
+      padding: 18px;
+      border: 1px solid rgba(123, 77, 42, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 253, 247, 0.78);
+    }
+
+    .bean-item .bean-icon {
+      display: block;
+      width: 34px;
+      height: 25px;
+      margin-bottom: 12px;
+      border-radius: 50%;
+      background: var(--bean);
+      transform: rotate(-18deg);
+      box-shadow: inset -5px -7px 0 rgba(216, 137, 36, 0.35);
+    }
+
+    .bean-item strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--brown-dark);
+      font-size: 17px;
+    }
+
+    .bean-item span {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .battle-board {
+      width: min(100%, 430px);
+      padding: 20px;
+      border: 1px solid rgba(123, 77, 42, 0.16);
+      border-radius: 8px;
+      background: rgba(255, 253, 247, 0.82);
+    }
+
+    .battle-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+      font-weight: 850;
+    }
+
+    .battle-row:last-child {
+      border-bottom: 0;
+    }
+
+    .ticker {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .gain {
+      color: var(--green);
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    .loss {
+      color: #c4514c;
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    .script-section {
+      margin-top: 28px;
+      padding: clamp(26px, 4vw, 48px);
+      border: 1px solid rgba(92, 60, 35, 0.16);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 247, 0.92);
+      box-shadow: var(--shadow);
+      scroll-margin-top: 86px;
+    }
+
+    .script-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .script-header h2 {
+      margin-bottom: 0;
+      font-size: 48px;
+    }
+
+    .time-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: var(--brown-dark);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .script-text {
+      display: grid;
+      gap: 14px;
+      max-width: 900px;
+      margin: 0;
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 650;
+    }
+
+    .script-text p {
+      margin: 0;
+    }
+
+    .footer-note {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      padding: 0 0 46px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    @media (max-width: 880px) {
+      .site-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .header-actions {
+        width: 100%;
+      }
+
+      .nav-pills {
+        width: 100%;
+      }
+
+      .script-link {
+        min-width: max-content;
+      }
+
+      .slide {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      h1 {
+        font-size: 74px;
+      }
+
+      h2 {
+        font-size: 50px;
+      }
+
+      .lead {
+        font-size: 28px;
+      }
+
+      .copy {
+        font-size: 18px;
+      }
+
+      .metric strong {
+        font-size: 26px;
+      }
+
+      .script-header h2 {
+        font-size: 38px;
+      }
+
+      .script-text {
+        font-size: 19px;
+      }
+
+      .slide-visual {
+        min-height: 230px;
+      }
+
+      .slide:first-child .slide-visual {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .brand-lockup {
+        min-width: 0;
+      }
+
+      .header-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .script-link {
+        width: 100%;
+      }
+
+      .slide {
+        padding: 24px 20px 44px;
+        border-radius: 8px;
+      }
+
+      h1 {
+        font-size: 50px;
+      }
+
+      h2 {
+        font-size: 34px;
+      }
+
+      .lead {
+        font-size: 22px;
+      }
+
+      .copy {
+        font-size: 16px;
+      }
+
+      .metric strong {
+        font-size: 23px;
+      }
+
+      .script-header h2 {
+        font-size: 30px;
+      }
+
+      .script-text {
+        font-size: 17px;
+      }
+
+      .mascot-stage {
+        width: min(100%, 300px);
+      }
+
+      .ant {
+        transform: scale(0.78);
+      }
+
+      .bean-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .script-header {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .site-header,
+      .footer-note {
+        display: none;
+      }
+
+      main {
+        width: 100%;
+        padding: 0;
+      }
+
+      .deck {
+        gap: 0;
+      }
+
+      .slide,
+      .script-section {
+        min-height: 100vh;
+        page-break-after: always;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header" aria-label="발표 내비게이션">
+    <div class="brand-lockup">
+      <span class="mini-ant" aria-hidden="true"></span>
+      <span>개미배틀 / AntBattle</span>
+    </div>
+    <div class="header-actions">
+      <nav class="nav-pills" aria-label="슬라이드 이동">
+        <a href="#slide-1">1</a>
+        <a href="#slide-2">2</a>
+        <a href="#slide-3">3</a>
+        <a href="#slide-4">4</a>
+        <a href="#slide-5">5</a>
+        <a href="#slide-6">6</a>
+        <a href="#slide-7">7</a>
+        <a href="#slide-8">8</a>
+        <a href="#slide-9">9</a>
+        <a href="#slide-10">10</a>
+      </nav>
+      <a class="script-link" href="#script">1분 발표 스크립트</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="deck" aria-label="CEO 회사소개 발표 슬라이드">
+      <article class="slide" id="slide-1">
+        <div class="slide-content">
+          <div class="slide-kicker">01 Cover</div>
+          <h1>개미배틀</h1>
+          <p class="lead">친구들과 겨루는 주식 수익률 배틀 게임</p>
+          <p class="copy">AntBattle은 “오를 것 같아?”라는 일상적인 주식 대화를 하루짜리 게임으로 바꾸는 소셜 배틀 앱입니다.</p>
+          <div class="meta-row" aria-label="핵심 키워드">
+            <span class="tag"><span class="tag-dot"></span>Social Battle</span>
+            <span class="tag"><span class="tag-dot"></span>No Real Trading</span>
+            <span class="tag"><span class="tag-dot"></span>Ant Bean Economy</span>
+          </div>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="mascot-stage">
+            <div class="ant">
+              <span class="antenna left"></span>
+              <span class="antenna right"></span>
+              <span class="leg l1"></span>
+              <span class="leg l2"></span>
+              <span class="leg l3"></span>
+              <span class="leg r1"></span>
+              <span class="leg r2"></span>
+              <span class="leg r3"></span>
+              <span class="head"></span>
+              <span class="body"></span>
+              <span class="belly"></span>
+              <span class="eye left"></span>
+              <span class="eye right"></span>
+              <span class="smile"></span>
+              <span class="bean-bag">콩</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-2">
+        <div class="slide-content">
+          <div class="slide-kicker">02 Problem</div>
+          <h2>문제</h2>
+          <p class="lead">친구들끼리 “이 종목 오른다”는 말은 많이 하지만, 그걸 재미있게 겨룰 공간은 부족합니다.</p>
+          <p class="copy">주식 이야기는 대화로 끝나기 쉽습니다. 누가 더 잘 봤는지, 어떤 선택이 통했는지, 친구들과 가볍게 기록하고 겨루는 경험은 아직 비어 있습니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="visual-panel">
+            <div class="metric">
+              <strong>말로만 끝나는 예측</strong>
+              <span>대화는 많지만 결과가 쌓이지 않습니다.</span>
+            </div>
+            <div class="metric">
+              <strong>무거운 투자 경험</strong>
+              <span>실제 매매는 부담스럽고 진입 장벽이 높습니다.</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-3">
+        <div class="slide-content">
+          <div class="slide-kicker">03 Solution</div>
+          <h2>해결책</h2>
+          <p class="lead">실제 투자 없이, 하루 수익률로 가볍게 겨루는 주식 배틀 앱입니다.</p>
+          <p class="copy">개미배틀은 매수와 매도 없이 종목 선택만으로 승부합니다. 사용자는 돈을 걸지 않고도 친구와 수익률 감각을 게임처럼 확인할 수 있습니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="battle-board">
+            <div class="battle-row">
+              <div>
+                <strong>민주의 픽</strong>
+                <div class="ticker">ANT 1일 수익률</div>
+              </div>
+              <span class="gain">+4.8%</span>
+            </div>
+            <div class="battle-row">
+              <div>
+                <strong>친구의 픽</strong>
+                <div class="ticker">BEAN 1일 수익률</div>
+              </div>
+              <span class="loss">-1.2%</span>
+            </div>
+            <div class="battle-row">
+              <div>
+                <strong>결과</strong>
+                <div class="ticker">장 마감 후 자동 판정</div>
+              </div>
+              <span class="gain">승리</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-4">
+        <div class="slide-content">
+          <div class="slide-kicker">04 How It Works</div>
+          <h2>서비스 방식</h2>
+          <p class="lead">친구 초대 → 종목 선택 → 장중 수익률 추적 → 장 마감 후 승패 결정</p>
+          <p class="copy">사용자는 친구를 초대하고 같은 시간 안에서 종목을 고릅니다. 이후 장중 수익률을 함께 지켜보고, 장 마감 시점의 수익률로 결과가 정해집니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="flow">
+            <div class="flow-step"><b>1</b><span>친구 초대</span></div>
+            <div class="flow-step"><b>2</b><span>종목 선택</span></div>
+            <div class="flow-step"><b>3</b><span>장중 수익률 추적</span></div>
+            <div class="flow-step"><b>4</b><span>장 마감 후 승패 결정</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-5">
+        <div class="slide-content">
+          <div class="slide-kicker">05 Game Loop</div>
+          <h2>게임 요소</h2>
+          <p class="lead">승리 보상, 랭킹, 연승, 개미콩, 캐릭터 성장으로 계속 들어오고 싶게 만듭니다.</p>
+          <p class="copy">매일 열리는 배틀, 친구 랭킹, 연승 기록, 보상 재투입 구조가 반복 방문을 만듭니다. 금융 정보 소비를 가벼운 게임 루프로 전환합니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="bean-grid">
+            <div class="bean-item"><span class="bean-icon"></span><strong>승리 보상</strong><span>장 마감 후 개미콩 지급</span></div>
+            <div class="bean-item"><span class="bean-icon"></span><strong>친구 랭킹</strong><span>오늘의 수익률 경쟁</span></div>
+            <div class="bean-item"><span class="bean-icon"></span><strong>연승 기록</strong><span>다음 배틀 동기 강화</span></div>
+            <div class="bean-item"><span class="bean-icon"></span><strong>캐릭터 성장</strong><span>나만의 개미 꾸미기</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-6">
+        <div class="slide-content">
+          <div class="slide-kicker">06 Mascot & Brand</div>
+          <h2>마스코트 / 브랜딩</h2>
+          <p class="lead">사용자는 자기 개미 캐릭터를 키우고 꾸밉니다.</p>
+          <p class="copy">개미는 개인 투자자를 상징하는 친근한 브랜드 자산입니다. 캐릭터 꾸미기는 사용자의 애착을 만들고, 서비스의 귀여운 정체성을 강화합니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="mascot-stage">
+            <div class="ant">
+              <span class="antenna left"></span>
+              <span class="antenna right"></span>
+              <span class="leg l1"></span>
+              <span class="leg l2"></span>
+              <span class="leg l3"></span>
+              <span class="leg r1"></span>
+              <span class="leg r2"></span>
+              <span class="leg r3"></span>
+              <span class="head"></span>
+              <span class="body"></span>
+              <span class="belly"></span>
+              <span class="eye left"></span>
+              <span class="eye right"></span>
+              <span class="smile"></span>
+              <span class="bean-bag">상점</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-7">
+        <div class="slide-content">
+          <div class="slide-kicker">07 Business Model</div>
+          <h2>수익모델</h2>
+          <p class="lead">개미콩 판매, 꾸미기 아이템, 시즌 패스, 브랜드 콜라보, 프리미엄 배틀룸으로 수익화합니다.</p>
+          <p class="copy">핵심 재화인 개미콩을 중심으로 참여권, 아이템, 시즌형 보상, 브랜드 협업까지 확장할 수 있는 게임 경제를 설계합니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="bean-grid">
+            <div class="bean-item"><span class="bean-icon"></span><strong>개미콩</strong><span>참여와 보상의 중심 재화</span></div>
+            <div class="bean-item"><span class="bean-icon"></span><strong>꾸미기 아이템</strong><span>캐릭터 애착 기반 구매</span></div>
+            <div class="bean-item"><span class="bean-icon"></span><strong>시즌 패스</strong><span>랭킹과 미션 보상 확장</span></div>
+            <div class="bean-item"><span class="bean-icon"></span><strong>프리미엄 룸</strong><span>그룹 배틀 기능 고도화</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-8">
+        <div class="slide-content">
+          <div class="slide-kicker">08 Target</div>
+          <h2>타깃</h2>
+          <p class="lead">주식 이야기를 자주 하는 20~30대 친구 그룹, 대학생, 직장인, 투자 커뮤니티 유저입니다.</p>
+          <p class="copy">핵심 사용자는 이미 주식 대화를 즐기는 사람들입니다. 개미배틀은 그들이 매일 나누는 말을 경쟁, 기록, 보상으로 연결합니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="visual-panel">
+            <div class="metric">
+              <strong>20~30대 친구 그룹</strong>
+              <span>메신저에서 주식 이야기를 자주 나누는 사용자</span>
+            </div>
+            <div class="metric">
+              <strong>대학생 · 직장인</strong>
+              <span>부담 없이 투자 감각을 겨루고 싶은 사용자</span>
+            </div>
+            <div class="metric">
+              <strong>투자 커뮤니티 유저</strong>
+              <span>추천과 예측을 게임으로 확인하고 싶은 사용자</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-9">
+        <div class="slide-content">
+          <div class="slide-kicker">09 Vision</div>
+          <h2>비전</h2>
+          <p class="lead">개미배틀은 단순 주식 앱이 아니라, 투자 대화를 놀이로 바꾸는 소셜 게임 플랫폼입니다.</p>
+          <p class="copy">오늘의 수익률 배틀에서 시작해 친구 그룹, 커뮤니티, 시즌 리그, 브랜드 이벤트로 확장되는 투자 놀이 생태계를 목표로 합니다.</p>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="flow">
+            <div class="flow-step"><b>A</b><span>친구 간 1:1 배틀</span></div>
+            <div class="flow-step"><b>B</b><span>그룹 랭킹과 시즌 리그</span></div>
+            <div class="flow-step"><b>C</b><span>커뮤니티형 투자 놀이</span></div>
+            <div class="flow-step"><b>D</b><span>소셜 게임 플랫폼</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" id="slide-10">
+        <div class="slide-content">
+          <div class="slide-kicker">10 Closing</div>
+          <h2>마무리</h2>
+          <p class="lead">“오를 것 같아?”라는 한마디를, 매일 열리는 친구들만의 배틀로 만들겠습니다.</p>
+          <p class="copy">개미배틀은 어렵고 무거운 주식 경험을 더 가볍고, 귀엽고, 계속 돌아오고 싶은 놀이로 바꿉니다.</p>
+          <div class="meta-row">
+            <span class="tag"><span class="tag-dot"></span>Daily Battle</span>
+            <span class="tag"><span class="tag-dot"></span>Friends First</span>
+            <span class="tag"><span class="tag-dot"></span>Cute Finance Game</span>
+          </div>
+        </div>
+        <div class="slide-visual" aria-hidden="true">
+          <div class="mascot-stage">
+            <div class="ant">
+              <span class="antenna left"></span>
+              <span class="antenna right"></span>
+              <span class="leg l1"></span>
+              <span class="leg l2"></span>
+              <span class="leg l3"></span>
+              <span class="leg r1"></span>
+              <span class="leg r2"></span>
+              <span class="leg r3"></span>
+              <span class="head"></span>
+              <span class="body"></span>
+              <span class="belly"></span>
+              <span class="eye left"></span>
+              <span class="eye right"></span>
+              <span class="smile"></span>
+              <span class="bean-bag">승리</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="script-section" id="script" aria-labelledby="script-title">
+      <div class="script-header">
+        <h2 id="script-title">1분 발표 스크립트</h2>
+        <span class="time-badge">CEO Intro · 60 sec</span>
+      </div>
+      <div class="script-text">
+        <p>안녕하세요. 개미배틀을 만들고 있는 대표 서민주입니다.</p>
+        <p>개미배틀은 친구들끼리 주식 수익률로 가볍게 겨루는 소셜 게임 앱입니다.</p>
+        <p>주식에 관심 있는 친구들끼리는 평소에도 “이 종목 오른다”, “내가 말했지?” 같은 이야기를 자주 합니다. 하지만 그 말을 실제로 재미있게 겨루고 기록할 수 있는 공간은 아직 부족합니다.</p>
+        <p>개미배틀은 이 일상적인 대화를 게임으로 바꿉니다. 사용자는 친구에게 배틀을 신청하고, 종목을 선택합니다. 실제 매수나 매도는 하지 않고, 장 오픈부터 장 마감까지의 하루 수익률로 승패가 결정됩니다.</p>
+        <p>이기면 개미콩을 얻고, 개미콩으로 배틀에 참여하거나 상점에서 아이템을 구매해 나만의 개미 캐릭터를 꾸밀 수 있습니다. 그래서 개미배틀은 단순한 주식 정보 앱이 아니라, 투자 이야기를 친구들과 함께 즐기는 게임형 커뮤니티입니다.</p>
+        <p>저희는 개미배틀을 통해 어렵고 무거운 주식 경험을 더 가볍고, 귀엽고, 계속 돌아오고 싶은 놀이로 만들고자 합니다.</p>
+        <p>개미배틀은 “오를 것 같아?”라는 한마디에서 시작되는, 친구들만의 주식 수익률 배틀 플랫폼입니다. 감사합니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-note">
+    GitHub Pages: https://minjoooong.github.io/AntBattle/ceo-intro/
+  </footer>
+
+  <script>
+    const slideLinks = Array.from(document.querySelectorAll(".nav-pills a"));
+    const slides = slideLinks
+      .map((link) => document.querySelector(link.getAttribute("href")))
+      .filter(Boolean);
+
+    const activateLink = (id) => {
+      slideLinks.forEach((link) => {
+        const isActive = link.getAttribute("href") === `#${id}`;
+        link.toggleAttribute("aria-current", isActive);
+      });
+    };
+
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visible) {
+          activateLink(visible.target.id);
+        }
+      }, { threshold: [0.38, 0.55, 0.72] });
+
+      slides.forEach((slide) => observer.observe(slide));
+    }
+  </script>
+</body>
+</html>
