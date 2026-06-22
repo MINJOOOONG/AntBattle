@@ -142,7 +142,8 @@
     }
 
     .nav-pills a:hover,
-    .nav-pills a:focus-visible {
+    .nav-pills a:focus-visible,
+    .nav-pills a[aria-current="true"] {
       outline: 0;
       background: var(--brown);
       color: #fff;
@@ -191,6 +192,7 @@
         var(--cream);
       box-shadow: var(--shadow);
       scroll-margin-top: 86px;
+      cursor: pointer;
     }
 
     .slide::before {
@@ -1170,13 +1172,57 @@
     const slides = slideLinks
       .map((link) => document.querySelector(link.getAttribute("href")))
       .filter(Boolean);
+    let currentSlideIndex = 0;
 
     const activateLink = (id) => {
       slideLinks.forEach((link) => {
         const isActive = link.getAttribute("href") === `#${id}`;
         link.toggleAttribute("aria-current", isActive);
       });
+
+      const nextIndex = slides.findIndex((slide) => slide.id === id);
+      if (nextIndex >= 0) {
+        currentSlideIndex = nextIndex;
+      }
     };
+
+    const goToSlide = (index) => {
+      const nextSlide = slides[index];
+
+      if (!nextSlide) {
+        document.querySelector("#script").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+
+      nextSlide.scrollIntoView({ behavior: "smooth", block: "start" });
+      activateLink(nextSlide.id);
+    };
+
+    const isInteractiveTarget = (target) => {
+      return Boolean(target.closest("a, button, input, textarea, select, summary, [role='button']"));
+    };
+
+    slides.forEach((slide, index) => {
+      slide.setAttribute("tabindex", "0");
+      slide.setAttribute("aria-label", `${index + 1}번 슬라이드. 탭하면 다음으로 이동합니다.`);
+
+      slide.addEventListener("click", (event) => {
+        if (isInteractiveTarget(event.target) || window.getSelection().toString()) {
+          return;
+        }
+
+        goToSlide(index + 1);
+      });
+
+      slide.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        goToSlide(index + 1);
+      });
+    });
 
     if ("IntersectionObserver" in window) {
       const observer = new IntersectionObserver((entries) => {
@@ -1191,6 +1237,22 @@
 
       slides.forEach((slide) => observer.observe(slide));
     }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.target !== document.body) {
+        return;
+      }
+
+      if (event.key === "ArrowRight" || event.key === "PageDown") {
+        event.preventDefault();
+        goToSlide(currentSlideIndex + 1);
+      }
+
+      if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        event.preventDefault();
+        goToSlide(Math.max(currentSlideIndex - 1, 0));
+      }
+    });
   </script>
 </body>
 </html>
