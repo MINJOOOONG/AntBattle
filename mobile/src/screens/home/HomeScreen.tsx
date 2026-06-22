@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../../constants/colors';
+import { HOME_COLORS } from '../../constants/colors';
 import { useAuthStore } from '../../store/authStore';
 import { getRankName, getRankColor } from '../../constants/ranks';
 import ClayAntCharacter from '../../components/ant/ClayAntCharacter';
-import CharacterBubble from '../../components/common/CharacterBubble';
-
 import LoadingView from '../../components/common/LoadingView';
-import SafetyDisclaimer from '../../components/common/SafetyDisclaimer';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -55,6 +52,18 @@ function pickRandom(arr: string[]): string {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+/** 홈 전용 말풍선 */
+function HomeBubble({ message }: { message: string }) {
+  return (
+    <View style={styles.bubbleWrap}>
+      <View style={styles.bubble}>
+        <Text style={styles.bubbleText}>{message}</Text>
+      </View>
+      <View style={styles.bubbleTail} />
+    </View>
+  );
+}
+
 export default function HomeScreen(_props: HomeScreenProps) {
   const { user, antBeans } = useAuthStore();
   const [bubbleMsg, setBubbleMsg] = useState(() => pickRandom(BUBBLES));
@@ -77,15 +86,9 @@ export default function HomeScreen(_props: HomeScreenProps) {
   const rankName = getRankName(user.rankScore);
   const rankColor = getRankColor(user.rankScore);
 
-  const infoSegments = [
-    rankName,
-    `@${user.handle}`,
-    ...(user.currentWinStreak > 0 ? [`${user.currentWinStreak}연승`] : []),
-  ];
-
   return (
     <View style={styles.container}>
-      {/* 상단 바: 인사 + 개미콩 */}
+      {/* 상단 바 */}
       <View style={styles.topBar}>
         <View style={styles.topBarLeft}>
           <Text style={styles.nickname}>{user.nickname},</Text>
@@ -99,96 +102,203 @@ export default function HomeScreen(_props: HomeScreenProps) {
 
       {/* 캐릭터 영역 */}
       <View style={styles.characterSection}>
-        <CharacterBubble message={bubbleMsg} />
-        <ClayAntCharacter
-          rankScore={user.rankScore}
-          size="hero"
-          equippedExpression={user.equippedExpressionId}
-        />
-        <Text style={styles.infoLine}>
-          {infoSegments.map((seg, i) => (
-            <Text key={i}>
-              {i === 0 ? (
-                <Text style={[styles.infoSegment, { color: rankColor, fontWeight: '700' }]}>{seg}</Text>
-              ) : (
-                <Text style={styles.infoSegment}>{seg}</Text>
-              )}
-              {i < infoSegments.length - 1 && <Text style={styles.infoDot}> · </Text>}
-            </Text>
-          ))}
-        </Text>
+        <HomeBubble message={bubbleMsg} />
+
+        <View style={styles.characterWrap}>
+          {/* 캐릭터 뒤 원형 배경 */}
+          <View style={styles.characterCircleBg} />
+          <ClayAntCharacter
+            rankScore={user.rankScore}
+            size="hero"
+            equippedExpression={user.equippedExpressionId}
+          />
+        </View>
+
+        {/* 바닥 그림자 */}
+        <View style={styles.floorShadow} />
+
+        {/* 프로필 배지 */}
+        <View style={styles.infoBadge}>
+          <Text style={[styles.infoRank, { color: rankColor }]}>{rankName}</Text>
+          <Text style={styles.infoDot}> · </Text>
+          <Text style={styles.infoHandle}>@{user.handle}</Text>
+          {user.currentWinStreak > 0 && (
+            <>
+              <Text style={styles.infoDot}> · </Text>
+              <Text style={styles.infoStreak}>{user.currentWinStreak}연승</Text>
+            </>
+          )}
+        </View>
       </View>
 
-      {/* 면책조항 */}
-      <SafetyDisclaimer />
+      {/* 면책조항 - 홈 전용 스타일 */}
+      <Text style={styles.disclaimer}>
+        개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다.{'\n'}
+        표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
+      </Text>
     </View>
   );
 }
 
+const HC = HOME_COLORS;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: HC.bg,
     paddingHorizontal: 20,
     paddingTop: 56,
     paddingBottom: 8,
   },
 
-  // 상단 바
+  // ── 상단 바 ──
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   topBarLeft: {
     flex: 1,
   },
   nickname: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
+    fontSize: 22,
+    fontWeight: '800',
+    color: HC.textPrimary,
   },
   greetingSub: {
     fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 2,
+    color: HC.textMuted,
+    marginTop: 3,
   },
   beanBadge: {
-    backgroundColor: COLORS.surfaceSoft,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: HC.beanBg,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     alignItems: 'center',
+    shadowColor: HC.textPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   beanLabel: {
     fontSize: 10,
-    color: COLORS.textSecondary,
+    fontWeight: '600',
+    color: HC.textMuted,
+    letterSpacing: 0.5,
   },
   beanValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.clay,
-    marginTop: 1,
+    fontSize: 18,
+    fontWeight: '800',
+    color: HC.beanText,
+    marginTop: 2,
   },
 
-  // 캐릭터
+  // ── 말풍선 (홈 전용) ──
+  bubbleWrap: {
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  bubble: {
+    backgroundColor: HC.bubbleBg,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    maxWidth: 260,
+    shadowColor: HC.textPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  bubbleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: HC.textPrimary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  bubbleTail: {
+    width: 12,
+    height: 8,
+    backgroundColor: HC.bubbleBg,
+    transform: [{ rotate: '45deg' }],
+    marginTop: -5,
+    shadowColor: HC.textPrimary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+
+  // ── 캐릭터 영역 ──
   characterSection: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
   },
-  infoLine: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 6,
+  characterWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  infoSegment: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
+  characterCircleBg: {
+    position: 'absolute',
+    width: '85%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    backgroundColor: HC.border,
+    opacity: 0.1,
   },
-  infoDot: {
-    color: COLORS.disabled,
+  floorShadow: {
+    width: 120,
+    height: 12,
+    borderRadius: 60,
+    backgroundColor: HC.border,
+    opacity: 0.25,
+    marginTop: -6,
   },
 
+  // ── 프로필 배지 ──
+  infoBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: HC.surface,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    marginTop: 10,
+    shadowColor: HC.textPrimary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  infoRank: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  infoHandle: {
+    fontSize: 13,
+    color: HC.textMuted,
+  },
+  infoStreak: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: HC.warmAccent,
+  },
+  infoDot: {
+    fontSize: 13,
+    color: HC.border,
+  },
+
+  // ── 면책조항 (홈 전용) ──
+  disclaimer: {
+    fontSize: 10,
+    color: HC.border,
+    textAlign: 'center',
+    lineHeight: 14,
+    paddingHorizontal: 16,
+  },
 });

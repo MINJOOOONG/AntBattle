@@ -2,11 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   ImageSourcePropType,
   StyleSheet,
   View,
   useWindowDimensions,
 } from 'react-native';
+import { EXPRESSION_ASSETS, isExpressionKey } from '../../constants/expressionAssets';
 
 type CharacterSize = 'small' | 'medium' | 'large' | 'hero';
 type CharacterVariant = 'idle' | 'happy' | 'sad' | 'win' | 'lose';
@@ -16,6 +18,7 @@ interface ClayAntCharacterProps {
   rankScore?: number;
   variant?: CharacterVariant;
   mood?: CharacterVariant;
+  equippedExpression?: string | null;
 }
 
 const SIZE_MAP: Record<CharacterSize, number> = {
@@ -38,6 +41,7 @@ export default function ClayAntCharacter({
   rankScore,
   variant,
   mood,
+  equippedExpression,
 }: ClayAntCharacterProps) {
   const { width: screenWidth } = useWindowDimensions();
   const imageSize =
@@ -45,6 +49,9 @@ export default function ClayAntCharacter({
       ? Math.min(Math.max(screenWidth * 0.86, SIZE_MAP.hero), 380)
       : SIZE_MAP[size];
   const selectedVariant = variant ?? mood ?? 'idle';
+  const expressionAsset = isExpressionKey(equippedExpression)
+    ? EXPRESSION_ASSETS[equippedExpression]
+    : undefined;
   const floatAnim = useRef(new Animated.Value(0)).current;
   void rankScore;
 
@@ -81,16 +88,27 @@ export default function ClayAntCharacter({
 
   return (
     <View style={[styles.container, { width: imageSize, height: imageSize }]}>
-      <Animated.Image
-        source={MASCOT_IMAGES[selectedVariant]}
+      <Animated.View
         style={[
-          styles.image,
+          styles.animatedLayer,
           {
             transform: [{ translateY }, { scale }],
           },
         ]}
-        resizeMode="contain"
-      />
+      >
+        <Image
+          source={MASCOT_IMAGES[selectedVariant]}
+          style={styles.image}
+          resizeMode="contain"
+        />
+        {expressionAsset && (
+          <Image
+            source={expressionAsset}
+            style={styles.expressionImage}
+            resizeMode="contain"
+          />
+        )}
+      </Animated.View>
     </View>
   );
 }
@@ -101,8 +119,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'visible',
   },
+  animatedLayer: {
+    height: '100%',
+    width: '100%',
+  },
   image: {
     width: '100%',
     height: '100%',
+  },
+  expressionImage: {
+    height: '18%',
+    left: '33%',
+    position: 'absolute',
+    top: '12%',
+    width: '34%',
   },
 });

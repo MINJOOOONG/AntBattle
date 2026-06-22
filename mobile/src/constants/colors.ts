@@ -37,3 +37,17 @@ export const COLORS = {
   secondary: '#CFC0BB',
   lossBue: '#5B7FB5',
 } as const;
+
+/** 홈 화면 전용 슬레이트 팔레트 */
+export const HOME_COLORS = {
+  bg: '#f2f3f5',
+  surface: '#ffffff',
+  textPrimary: '#2c2f38',
+  textSecondary: '#545967',
+  textMuted: '#7f838e',
+  border: '#babdc5',
+  bubbleBg: '#ffffff',
+  beanBg: '#2c2f38',
+  beanText: '#ffffff',
+  warmAccent: '#987455',
+} as const;

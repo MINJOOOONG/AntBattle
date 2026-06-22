@@ -1,6 +1,6 @@
 import api from './api';
 import { AntItem, UserItem } from '../types/models';
-import { ShopItemsResponse, PurchaseResponse, InventoryResponse } from '../types/api';
+import { ShopItemsResponse, PurchaseResponse, InventoryResponse, EquipResponse } from '../types/api';
 
 export const shopService = {
   async getShopItems(category?: string): Promise<AntItem[]> {
@@ -19,8 +19,9 @@ export const shopService = {
     return data.items;
   },
 
-  async equipItem(userItemId: string): Promise<void> {
-    await api.post('/shop/inventory/equip', { userItemId });
+  async equipItem(userItemId: string): Promise<EquipResponse> {
+    const { data } = await api.post<EquipResponse>('/shop/inventory/equip', { userItemId });
+    return data;
   },
 
   async unequipItem(category: string): Promise<void> {

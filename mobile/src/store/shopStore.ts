@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AntItem, UserItem } from '../types/models';
+import { AntItem, User, UserItem } from '../types/models';
 import { shopService } from '../services/shop.service';
 
 interface ShopState {
@@ -10,7 +10,7 @@ interface ShopState {
   loadShopItems: (category?: string) => Promise<void>;
   loadInventory: () => Promise<void>;
   purchaseItem: (itemId: string) => Promise<number>;
-  equipItem: (userItemId: string) => Promise<void>;
+  equipItem: (userItemId: string) => Promise<Partial<User>>;
   unequipItem: (category: string) => Promise<void>;
 }
 
@@ -48,7 +48,8 @@ export const useShopStore = create<ShopState>((set) => ({
   },
 
   equipItem: async (userItemId: string) => {
-    await shopService.equipItem(userItemId);
+    const result = await shopService.equipItem(userItemId);
+    return result.user;
   },
 
   unequipItem: async (category: string) => {
