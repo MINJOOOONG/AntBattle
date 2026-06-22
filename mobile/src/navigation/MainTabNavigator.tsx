@@ -1,21 +1,17 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
 import { MainTabParamList } from './types';
 import { COLORS } from '../constants/colors';
 import HomeScreen from '../screens/home/HomeScreen';
 import MyPageScreen from '../screens/profile/MyPageScreen';
 import BattleListScreen from '../screens/battle/BattleListScreen';
+import ShopScreen from '../screens/shop/ShopScreen';
 import HomeIcon from '../components/icons/HomeIcon';
 import BattleIcon from '../components/icons/BattleIcon';
 import ShopIcon from '../components/icons/ShopIcon';
 import MyPageIcon from '../components/icons/MyPageIcon';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-
-function ShopPlaceholder() {
-  return <Text style={{ flex: 1, textAlign: 'center', marginTop: 100 }}>상점 (Phase 4)</Text>;
-}
 
 export default function MainTabNavigator() {
   return (
@@ -43,7 +39,7 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Shop"
-        component={ShopPlaceholder}
+        component={ShopScreen}
         options={{ tabBarLabel: '상점', tabBarIcon: ({ color }) => <ShopIcon size={22} color={color} /> }}
       />
       <Tab.Screen

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, Text } from 'react-native';
 import Svg, {
   Circle,
   Defs,
@@ -9,6 +9,7 @@ import Svg, {
   RadialGradient,
   Stop,
 } from 'react-native-svg';
+import { EXPRESSION_ASSETS, isExpressionKey } from '../../constants/expressionAssets';
 
 interface AntCharacterProps {
   scale?: number;
@@ -105,6 +106,9 @@ export default function AntCharacter({
   const headGradient = `cottonHead${gradientId}`;
   const bodyGradient = `cottonBody${gradientId}`;
   const shadowGradient = `cottonShadow${gradientId}`;
+  const expressionAsset = isExpressionKey(equippedExpression)
+    ? EXPRESSION_ASSETS[equippedExpression]
+    : undefined;
 
   return (
     <Animated.View
@@ -226,7 +230,14 @@ export default function AntCharacter({
         </G>
       </Svg>
 
-      {equippedExpression && (
+      {expressionAsset && (
+        <Image
+          source={expressionAsset}
+          style={styles.expressionImage}
+          resizeMode="contain"
+        />
+      )}
+      {equippedExpression && !isExpressionKey(equippedExpression) && (
         <Text style={[styles.expression, { fontSize: baseSize * 0.14 }]}>
           {equippedExpression}
         </Text>
@@ -261,6 +272,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     position: 'absolute',
     top: '48%',
+    zIndex: 3,
+  },
+  expressionImage: {
+    height: '26%',
+    left: '31%',
+    position: 'absolute',
+    top: '32%',
+    width: '38%',
     zIndex: 3,
   },
 });
