@@ -6,7 +6,6 @@ import { getRankName, getRankColor } from '../../constants/ranks';
 import ClayAntCharacter from '../../components/ant/ClayAntCharacter';
 import CharacterBubble from '../../components/common/CharacterBubble';
 
-import PastelButton from '../../components/common/PastelButton';
 import LoadingView from '../../components/common/LoadingView';
 import SafetyDisclaimer from '../../components/common/SafetyDisclaimer';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -56,7 +55,7 @@ function pickRandom(arr: string[]): string {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export default function HomeScreen({ navigation }: HomeScreenProps) {
+export default function HomeScreen(_props: HomeScreenProps) {
   const { user, antBeans } = useAuthStore();
   const [bubbleMsg, setBubbleMsg] = useState(() => pickRandom(BUBBLES));
 
@@ -101,7 +100,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       {/* 캐릭터 영역 */}
       <View style={styles.characterSection}>
         <CharacterBubble message={bubbleMsg} />
-        <ClayAntCharacter rankScore={user.rankScore} size="hero" />
+        <ClayAntCharacter
+          rankScore={user.rankScore}
+          size="hero"
+          equippedExpression={user.equippedExpressionId}
+        />
         <Text style={styles.infoLine}>
           {infoSegments.map((seg, i) => (
             <Text key={i}>
@@ -114,31 +117,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </Text>
           ))}
         </Text>
-      </View>
-
-      {/* CTA 영역 */}
-      <View style={styles.ctaSection}>
-        <PastelButton
-          title="친구 개미에게 도전하기"
-          variant="clay"
-          onPress={() => navigation.navigate('BattleRequest')}
-          style={styles.ctaMain}
-        />
-        <View style={styles.ctaSubRow}>
-          <PastelButton
-            title="친구 찾기"
-            variant="blush"
-            onPress={() => navigation.navigate('FriendSearch')}
-            style={styles.ctaSub}
-          />
-          <View style={styles.statGap} />
-          <PastelButton
-            title="친구 목록"
-            variant="ghost"
-            onPress={() => navigation.navigate('FriendList')}
-            style={styles.ctaSub}
-          />
-        </View>
       </View>
 
       {/* 면책조항 */}
@@ -213,31 +191,4 @@ const styles = StyleSheet.create({
     color: COLORS.disabled,
   },
 
-  statGap: {
-    width: 6,
-  },
-
-  // CTA
-  ctaSection: {
-    marginBottom: 4,
-  },
-  ctaMain: {
-    marginBottom: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#B08E6E',
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#7A5C3E',
-    shadowColor: '#5A4030',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  ctaSubRow: {
-    flexDirection: 'row',
-  },
-  ctaSub: {
-    flex: 1,
-    height: 42,
-  },
 });
