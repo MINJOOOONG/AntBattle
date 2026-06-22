@@ -20,6 +20,7 @@ export const EXPRESSION_ITEMS: Array<{
 ];
 
 export const EXPRESSION_ASSETS: Partial<Record<ExpressionKey, ImageSourcePropType>> = {
+  face_blank: require('../../assets/expressions/face_blank.png'),
   face_smirk: require('../../assets/expressions/face_smirk.png'),
   face_angry: require('../../assets/expressions/face_angry.png'),
   face_shock: require('../../assets/expressions/face_shock.png'),

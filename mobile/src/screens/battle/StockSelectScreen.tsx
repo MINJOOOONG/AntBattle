@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { useBattleStore } from '../../store/battleStore';
@@ -51,34 +52,42 @@ export default function StockSelectScreen({ route, navigation }: RootScreenProps
     loadStocks(trimmed || undefined);
   };
 
-  const handleSelectStock = (stock: Stock) => {
-    Alert.alert(
-      '종목 선택',
-      `${stock.name}을 내 개미가 들고 뛸까요?`,
-      [
-        { text: '다시 볼게', style: 'cancel' },
-        {
-          text: '이 종목이야!',
-          onPress: async () => {
-            setSubmitting(true);
-            try {
-              await selectStock(battleId, stock.id);
-              await loadBattleDetail(battleId);
-              const battle = useBattleStore.getState().currentBattle;
-              if (battle?.status === 'active') {
-                navigation.replace('BattleProgress', { battleId });
-              } else {
-                Alert.alert('종목 선택 완료!', '상대 개미가 종목을 고르면 배틀이 시작돼요.');
-              }
-            } catch (e: any) {
-              Alert.alert('앗!', e?.response?.data?.error?.message || '종목 선택에 실패했어요.');
-            } finally {
-              setSubmitting(false);
-            }
-          },
-        },
-      ]
-    );
+  const handleSelectStock = async (stock: Stock) => {
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm(`${stock.name}을 내 개미가 들고 뛸까요?`)
+      : await new Promise<boolean>((resolve) =>
+          Alert.alert('종목 선택', `${stock.name}을 내 개미가 들고 뛸까요?`, [
+            { text: '다시 볼게', style: 'cancel', onPress: () => resolve(false) },
+            { text: '이 종목이야!', onPress: () => resolve(true) },
+          ])
+        );
+
+    if (!confirmed) return;
+
+    setSubmitting(true);
+    try {
+      await selectStock(battleId, stock.id);
+      await loadBattleDetail(battleId);
+      const battle = useBattleStore.getState().currentBattle;
+      if (battle?.status === 'active') {
+        navigation.replace('BattleProgress', { battleId });
+      } else {
+        if (Platform.OS === 'web') {
+          window.alert('상대 개미가 종목을 고르면 배틀이 시작돼요.');
+        } else {
+          Alert.alert('종목 선택 완료!', '상대 개미가 종목을 고르면 배틀이 시작돼요.');
+        }
+      }
+    } catch (e: any) {
+      const msg = e?.response?.data?.error?.message || '종목 선택에 실패했어요.';
+      if (Platform.OS === 'web') {
+        window.alert(msg);
+      } else {
+        Alert.alert('앗!', msg);
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (isLoading && !currentBattle) return <LoadingView message="배틀 정보 불러오는 중..." />;
@@ -86,6 +95,20 @@ export default function StockSelectScreen({ route, navigation }: RootScreenProps
 
   const myParticipant = currentBattle.participants.find((p) => p.userId === user.id);
   const alreadySelected = myParticipant && myParticipant.stockId;
+
+  // 대기 중일 때 폴링으로 상태 확인 → active 되면 자동 이동
+  useEffect(() => {
+    if (!alreadySelected) return;
+    const interval = setInterval(async () => {
+      await loadBattleDetail(battleId);
+      const battle = useBattleStore.getState().currentBattle;
+      if (battle?.status === 'active') {
+        clearInterval(interval);
+        navigation.replace('BattleProgress', { battleId });
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [alreadySelected, battleId]);
 
   if (alreadySelected) {
     return (

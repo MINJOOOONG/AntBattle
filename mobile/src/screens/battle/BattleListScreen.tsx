@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../constants/colors';
 import { useBattleStore } from '../../store/battleStore';
 import { useAuthStore } from '../../store/authStore';
@@ -58,9 +59,12 @@ export default function BattleListScreen({ navigation }: BattleListScreenProps) 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadBattles();
-  }, []);
+  // 탭 포커스 시마다 배틀 목록 자동 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      loadBattles();
+    }, [loadBattles])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
