@@ -86,6 +86,17 @@ export default function HomeScreen(_props: HomeScreenProps) {
 
   return (
     <View style={styles.container}>
+      {/* 배경 이미지 */}
+      <View style={styles.backgroundWrap} pointerEvents="none">
+        <Image
+          source={require('../../../assets/backgrounds/home-background-3.png')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* 콘텐츠 */}
+      <View style={styles.content}>
       {/* 상단 바 */}
       <View style={styles.topBar}>
         <View style={styles.topBarLeft}>
@@ -131,6 +142,7 @@ export default function HomeScreen(_props: HomeScreenProps) {
         개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다.{'\n'}
         표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
       </Text>
+      </View>
     </View>
   );
 }
@@ -140,7 +152,21 @@ const HC = HOME_COLORS;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: HC.bg,
+    overflow: 'hidden',
+  },
+  backgroundWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 56,
     paddingBottom: 8,
