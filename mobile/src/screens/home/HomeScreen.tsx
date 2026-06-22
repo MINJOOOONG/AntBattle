@@ -1,13 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { useAuthStore } from '../../store/authStore';
 import { getRankName, getRankColor } from '../../constants/ranks';
 import ClayAntCharacter from '../../components/ant/ClayAntCharacter';
 import CharacterBubble from '../../components/common/CharacterBubble';
-import SoftCard from '../../components/common/SoftCard';
-import StatPill from '../../components/common/StatPill';
-import SectionHeader from '../../components/common/SectionHeader';
+
 import PastelButton from '../../components/common/PastelButton';
 import LoadingView from '../../components/common/LoadingView';
 import SafetyDisclaimer from '../../components/common/SafetyDisclaimer';
@@ -32,6 +30,26 @@ const BUBBLES = [
   '친구 개미랑 한 판 붙어볼까요?',
   '개미콩 모아서 뭐 사지...',
   '오늘은 떡상 기운이 느껴져요!',
+  '오늘 수익률 실화...?',
+  '나 지금 개미콩 부자임 ㅋ',
+  '손절은 없다 뚝심으로 간다',
+  '주식은 멘탈이지 멘탈',
+  '오늘 장 분위기 좀 치는데?',
+  '개미인생 레전드 찍자',
+  'ㅎㅇ 오늘도 출근했다',
+  '누가 날 이기겠어 ㅋㅋ',
+  '개미콩 다 쓰면 어쩌지...',
+  '오늘은 좀 쉴까... 아니 안 쉰다',
+  '나 원래 이 종목 찍었었음',
+  '연승 중인 건 비밀임',
+  '배틀 지면 없던 일로 ㅋ',
+  '개미 중에 제일 귀여운 듯',
+  '이번 달 목표: 개미콩 부자',
+  '지금 내 표정 어때 귀엽지',
+  '오늘 승률 100% 갈 수 있다',
+  '슬리피하지만 장은 봐야지',
+  '친구 개미한테 질 수 없음',
+  '개미콩 모아서 드립 사야지',
 ];
 
 function pickRandom(arr: string[]): string {
@@ -45,78 +63,73 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   const rankName = getRankName(user.rankScore);
   const rankColor = getRankColor(user.rankScore);
-  const totalBattles = user.winCount + user.loseCount + user.drawCount;
+
+  const infoSegments = [
+    rankName,
+    `@${user.handle}`,
+    ...(user.currentWinStreak > 0 ? [`${user.currentWinStreak}연승`] : []),
+  ];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 인사 */}
-      <View style={styles.greetingSection}>
-        <Text style={styles.greeting}>{user.nickname},</Text>
-        <Text style={styles.subGreeting}>{pickRandom(GREETINGS)}</Text>
+    <View style={styles.container}>
+      {/* 상단 바: 인사 + 개미콩 */}
+      <View style={styles.topBar}>
+        <View style={styles.topBarLeft}>
+          <Text style={styles.nickname}>{user.nickname},</Text>
+          <Text style={styles.greetingSub}>{pickRandom(GREETINGS)}</Text>
+        </View>
+        <View style={styles.beanBadge}>
+          <Text style={styles.beanLabel}>개미콩</Text>
+          <Text style={styles.beanValue}>{antBeans.toLocaleString()}</Text>
+        </View>
       </View>
 
-      {/* 메인 캐릭터 */}
-      <View style={styles.heroSection}>
+      {/* 캐릭터 영역 */}
+      <View style={styles.characterSection}>
         <CharacterBubble message={pickRandom(BUBBLES)} />
-        <View style={styles.heroCharacter}>
-          <ClayAntCharacter
-            rankScore={user.rankScore}
-            size="hero"
+        <ClayAntCharacter rankScore={user.rankScore} size="hero" />
+        <Text style={styles.infoLine}>
+          {infoSegments.map((seg, i) => (
+            <Text key={i}>
+              {i === 0 ? (
+                <Text style={[styles.infoSegment, { color: rankColor, fontWeight: '700' }]}>{seg}</Text>
+              ) : (
+                <Text style={styles.infoSegment}>{seg}</Text>
+              )}
+              {i < infoSegments.length - 1 && <Text style={styles.infoDot}> · </Text>}
+            </Text>
+          ))}
+        </Text>
+      </View>
+
+      {/* CTA 영역 */}
+      <View style={styles.ctaSection}>
+        <PastelButton
+          title="친구 개미에게 도전하기"
+          variant="clay"
+          onPress={() => navigation.navigate('BattleRequest')}
+          style={styles.ctaMain}
+        />
+        <View style={styles.ctaSubRow}>
+          <PastelButton
+            title="친구 찾기"
+            variant="blush"
+            onPress={() => navigation.navigate('FriendSearch')}
+            style={styles.ctaSub}
+          />
+          <View style={styles.statGap} />
+          <PastelButton
+            title="친구 목록"
+            variant="ghost"
+            onPress={() => navigation.navigate('FriendList')}
+            style={styles.ctaSub}
           />
         </View>
-        <Text style={[styles.rankLabel, { color: rankColor }]}>{rankName}</Text>
-        <Text style={styles.handleText}>@{user.handle}</Text>
       </View>
 
-      {/* 상태 카드 — 3D clay 볼륨감 */}
-      <SoftCard style={styles.statsCard3d}>
-        <View style={styles.statsRow}>
-          <StatPill label="개미콩" value={`${antBeans.toLocaleString()}`} color={COLORS.clay} />
-          <View style={{ width: 8 }} />
-          <StatPill label="랭크" value={`${user.rankScore}점`} color={rankColor} />
-        </View>
-        <View style={[styles.statsRow, { marginTop: 8 }]}>
-          <StatPill label="승" value={user.winCount} color={COLORS.gainRed} />
-          <View style={{ width: 8 }} />
-          <StatPill label="패" value={user.loseCount} color={COLORS.lossBlue} />
-          <View style={{ width: 8 }} />
-          <StatPill label="무" value={user.drawCount} />
-          <View style={{ width: 8 }} />
-          <StatPill label="총" value={totalBattles} />
-        </View>
-      </SoftCard>
-
-      {/* 연승 배너 */}
-      {user.currentWinStreak > 0 && (
-        <SoftCard variant="soft" style={styles.streakCard}>
-          <Text style={styles.streakText}>{user.currentWinStreak}연승 중!</Text>
-        </SoftCard>
-      )}
-
-      {/* CTA 메뉴 */}
-      <SectionHeader title="무엇을 할까요?" />
-
-      <PastelButton
-        title="친구 개미에게 도전하기"
-        variant="clay"
-        onPress={() => navigation.navigate('BattleRequest')}
-        style={styles.ctaClay}
-      />
-      <PastelButton
-        title="친구 찾기"
-        variant="blush"
-        onPress={() => navigation.navigate('FriendSearch')}
-        style={styles.ctaBlush}
-      />
-      <PastelButton
-        title="친구 목록 보기"
-        variant="ghost"
-        onPress={() => navigation.navigate('FriendList')}
-        style={styles.ctaGhost}
-      />
-
+      {/* 면책조항 */}
       <SafetyDisclaimer />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -124,69 +137,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingBottom: 8,
   },
-  content: {
-    padding: 20,
-    paddingTop: 60,
+
+  // 상단 바
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  greetingSection: {
-    marginBottom: 8,
+  topBarLeft: {
+    flex: 1,
   },
-  greeting: {
-    fontSize: 24,
+  nickname: {
+    fontSize: 20,
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
-  subGreeting: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
-  heroSection: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  heroCharacter: {
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  rankLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  handleText: {
+  greetingSub: {
     fontSize: 13,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  statsCard3d: {
-    marginBottom: 12,
-    // 3D clay card: stronger shadow + top highlight
-    shadowColor: '#3F3A36',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
-    borderTopWidth: 0.8,
-    borderTopColor: 'rgba(255,255,255,0.5)',
-  },
-  statsRow: {
-    flexDirection: 'row',
-  },
-  streakCard: {
+  beanBadge: {
+    backgroundColor: COLORS.surfaceSoft,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     alignItems: 'center',
-    marginBottom: 16,
-    paddingVertical: 12,
   },
-  streakText: {
+  beanLabel: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+  },
+  beanValue: {
     fontSize: 16,
     fontWeight: '700',
     color: COLORS.clay,
+    marginTop: 1,
   },
-  ctaClay: {
-    marginBottom: 10,
-    // 3D button: top light, bottom dark
+
+  // 캐릭터
+  characterSection: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  infoLine: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 6,
+  },
+  infoSegment: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+  },
+  infoDot: {
+    color: COLORS.disabled,
+  },
+
+  statGap: {
+    width: 6,
+  },
+
+  // CTA
+  ctaSection: {
+    marginBottom: 4,
+  },
+  ctaMain: {
+    marginBottom: 8,
     borderTopWidth: 1,
     borderTopColor: '#B08E6E',
     borderBottomWidth: 1.5,
@@ -197,19 +219,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  ctaBlush: {
-    marginBottom: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#DDD0CA',
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#B5A8A0',
-    shadowColor: '#8A7C74',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
+  ctaSubRow: {
+    flexDirection: 'row',
   },
-  ctaGhost: {
-    marginBottom: 10,
+  ctaSub: {
+    flex: 1,
+    height: 42,
   },
 });
