@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { useAuthStore } from '../../store/authStore';
@@ -58,6 +58,20 @@ function pickRandom(arr: string[]): string {
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { user, antBeans } = useAuthStore();
+  const [bubbleMsg, setBubbleMsg] = useState(() => pickRandom(BUBBLES));
+
+  const rotateBubble = useCallback(() => {
+    setBubbleMsg((prev) => {
+      let next = pickRandom(BUBBLES);
+      while (next === prev && BUBBLES.length > 1) next = pickRandom(BUBBLES);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(rotateBubble, 5000);
+    return () => clearInterval(timer);
+  }, [rotateBubble]);
 
   if (!user) return <LoadingView message="개미 불러오는 중..." />;
 
@@ -86,7 +100,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
       {/* 캐릭터 영역 */}
       <View style={styles.characterSection}>
-        <CharacterBubble message={pickRandom(BUBBLES)} />
+        <CharacterBubble message={bubbleMsg} />
         <ClayAntCharacter rankScore={user.rankScore} size="hero" />
         <Text style={styles.infoLine}>
           {infoSegments.map((seg, i) => (
