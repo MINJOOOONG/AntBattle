@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { HOME_COLORS } from '../../constants/colors';
 import { useAuthStore } from '../../store/authStore';
-import { getRankName, getRankColor } from '../../constants/ranks';
+import { useBGMControl } from '../../hooks/useBGM';
 import ClayAntCharacter from '../../components/ant/ClayAntCharacter';
 import LoadingView from '../../components/common/LoadingView';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -66,6 +66,7 @@ function HomeBubble({ message }: { message: string }) {
 
 export default function HomeScreen(_props: HomeScreenProps) {
   const { user, antBeans } = useAuthStore();
+  const { isPlaying, toggle: toggleBGM } = useBGMControl();
   const [bubbleMsg, setBubbleMsg] = useState(() => pickRandom(BUBBLES));
 
   const rotateBubble = useCallback(() => {
@@ -83,9 +84,6 @@ export default function HomeScreen(_props: HomeScreenProps) {
 
   if (!user) return <LoadingView message="개미 불러오는 중..." />;
 
-  const rankName = getRankName(user.rankScore);
-  const rankColor = getRankColor(user.rankScore);
-
   return (
     <View style={styles.container}>
       {/* 상단 바 */}
@@ -94,9 +92,22 @@ export default function HomeScreen(_props: HomeScreenProps) {
           <Text style={styles.nickname}>{user.nickname},</Text>
           <Text style={styles.greetingSub}>{pickRandom(GREETINGS)}</Text>
         </View>
-        <View style={styles.beanBadge}>
-          <Text style={styles.beanLabel}>개미콩</Text>
-          <Text style={styles.beanValue}>{antBeans.toLocaleString()}</Text>
+        <View style={styles.topBarRight}>
+          <Pressable onPress={toggleBGM} style={styles.soundBtn} hitSlop={8}>
+            <Image
+              source={require('../../../assets/icons/sound.png')}
+              style={[styles.soundIcon, !isPlaying && { opacity: 0.4 }]}
+              resizeMode="contain"
+            />
+          </Pressable>
+          <View style={styles.beanBadge}>
+            <Image
+              source={require('../../../assets/icons/antbean.png')}
+              style={styles.beanIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.beanValue}>{antBeans.toLocaleString()}</Text>
+          </View>
         </View>
       </View>
 
@@ -105,30 +116,14 @@ export default function HomeScreen(_props: HomeScreenProps) {
         <HomeBubble message={bubbleMsg} />
 
         <View style={styles.characterWrap}>
-          {/* 캐릭터 뒤 원형 배경 */}
-          <View style={styles.characterCircleBg} />
           <ClayAntCharacter
             rankScore={user.rankScore}
             size="hero"
             equippedExpression={user.equippedExpressionId}
+            animated={false}
           />
         </View>
 
-        {/* 바닥 그림자 */}
-        <View style={styles.floorShadow} />
-
-        {/* 프로필 배지 */}
-        <View style={styles.infoBadge}>
-          <Text style={[styles.infoRank, { color: rankColor }]}>{rankName}</Text>
-          <Text style={styles.infoDot}> · </Text>
-          <Text style={styles.infoHandle}>@{user.handle}</Text>
-          {user.currentWinStreak > 0 && (
-            <>
-              <Text style={styles.infoDot}> · </Text>
-              <Text style={styles.infoStreak}>{user.currentWinStreak}연승</Text>
-            </>
-          )}
-        </View>
       </View>
 
       {/* 면책조항 - 홈 전용 스타일 */}
@@ -171,29 +166,36 @@ const styles = StyleSheet.create({
     color: HC.textMuted,
     marginTop: 3,
   },
-  beanBadge: {
-    backgroundColor: HC.beanBg,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  topBarRight: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: HC.textPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    gap: 14,
   },
-  beanLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: HC.textMuted,
-    letterSpacing: 0.5,
+  soundBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  soundIcon: {
+    width: 42,
+    height: 42,
+    backgroundColor: 'transparent',
+  },
+  beanBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'transparent',
+  },
+  beanIcon: {
+    width: 42,
+    height: 42,
+    backgroundColor: 'transparent',
   },
   beanValue: {
     fontSize: 18,
     fontWeight: '800',
-    color: HC.beanText,
-    marginTop: 2,
+    color: HC.textPrimary,
   },
 
   // ── 말풍선 (홈 전용) ──
@@ -243,55 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  characterCircleBg: {
-    position: 'absolute',
-    width: '85%',
-    aspectRatio: 1,
-    borderRadius: 999,
-    backgroundColor: HC.border,
-    opacity: 0.1,
-  },
-  floorShadow: {
-    width: 120,
-    height: 12,
-    borderRadius: 60,
-    backgroundColor: HC.border,
-    opacity: 0.25,
-    marginTop: -6,
-  },
 
-  // ── 프로필 배지 ──
-  infoBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: HC.surface,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    marginTop: 10,
-    shadowColor: HC.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  infoRank: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  infoHandle: {
-    fontSize: 13,
-    color: HC.textMuted,
-  },
-  infoStreak: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: HC.warmAccent,
-  },
-  infoDot: {
-    fontSize: 13,
-    color: HC.border,
-  },
 
   // ── 면책조항 (홈 전용) ──
   disclaimer: {

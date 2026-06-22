@@ -10,10 +10,10 @@ import ShopScreen from '../screens/shop/ShopScreen';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TAB_ICONS = {
-  home: require('../../assets/tab-icons/home.png'),
-  battle: require('../../assets/tab-icons/battle.png'),
-  shop: require('../../assets/tab-icons/shop.png'),
-  mypage: require('../../assets/tab-icons/mypage.png'),
+  home: require('../../assets/icons/home.png'),
+  battle: require('../../assets/icons/battle.png'),
+  shop: require('../../assets/icons/shop.png'),
+  mypage: require('../../assets/icons/mypage.png'),
 } satisfies Record<string, ImageSourcePropType>;
 
 function TabImageIcon({ source, focused }: { source: ImageSourcePropType; focused: boolean }) {
@@ -24,7 +24,6 @@ function TabImageIcon({ source, focused }: { source: ImageSourcePropType; focuse
         style={[styles.tabIcon, focused ? styles.activeIcon : styles.inactiveIcon]}
         resizeMode="contain"
       />
-      {focused && <View style={styles.dot} />}
     </View>
   );
 }
@@ -36,12 +35,13 @@ export default function MainTabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#babdc5',
-          borderTopWidth: 0.5,
+          backgroundColor: '#f2f3f5',
+          borderTopWidth: 0,
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
+          elevation: 0,
+          shadowOpacity: 0,
         },
       }}
     >
@@ -90,13 +90,6 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   inactiveIcon: {
-    opacity: 0.35,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#2c2f38',
-    marginTop: 4,
+    opacity: 0.5,
   },
 });
