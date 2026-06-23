@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     zIndex: 4,
   },
   itemLayer: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     zIndex: 5,
   },
 });

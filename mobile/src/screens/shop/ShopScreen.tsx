@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   FlatList,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { EXPRESSION_ASSETS, isExpressionKey } from '../../constants/expressionAssets';
@@ -17,27 +17,80 @@ import { useAuthStore } from '../../store/authStore';
 import { useShopStore } from '../../store/shopStore';
 import { AntItem, UserItem } from '../../types/models';
 import type { MainTabScreenProps } from '../../navigation/types';
+import type { ItemCategory } from '../../types/enums';
+
+/** 배경 이미지 원본 비율 (941 × 1672) */
+const BG_IMG_W = 941;
+const BG_IMG_H = 1672;
 
 type ShopScreenProps = MainTabScreenProps<'Shop'>;
-type TabType = 'expression' | 'outfit';
+type ShopTab = Extract<ItemCategory, 'outfit' | 'hat' | 'glasses'>;
 
-const SCREEN_W = Dimensions.get('window').width;
-// right panel is flex:6 of total, with 8px right margin
-const RIGHT_PANEL_W = SCREEN_W * 0.6 - 8;
-// 3 cols, 8px horizontal padding each side, 4px gap between cols
-const ITEM_W = Math.floor((RIGHT_PANEL_W - 16 - 8) / 3);
+const SHOP_TABS: { key: ShopTab; label: string }[] = [
+  { key: 'outfit', label: '옷' },
+  { key: 'hat', label: '모자' },
+  { key: 'glasses', label: '액세서리' },
+];
 
 function getExpressionImage(emoji: string) {
   return isExpressionKey(emoji) ? EXPRESSION_ASSETS[emoji] : undefined;
 }
 
-export default function ShopScreen({}: ShopScreenProps) {
+function isEquippedItem(user: ReturnType<typeof useAuthStore.getState>['user'], item: AntItem) {
+  if (!user) return false;
+
+  switch (item.category) {
+    case 'hat':
+      return user.equippedHatId === item.id;
+    case 'glasses':
+      return user.equippedGlassesId === item.id;
+    case 'expression':
+      return user.equippedExpressionId === item.emoji;
+    case 'outfit':
+      return user.equippedOutfitId === item.id;
+    case 'background':
+      return user.equippedBackgroundId === item.id;
+    case 'title':
+      return user.equippedTitleId === item.id;
+    default:
+      return false;
+  }
+}
+
+export default function ShopScreen({ navigation }: ShopScreenProps) {
+  const { width: screenW, height: screenH } = useWindowDimensions();
   const { user, antBeans, patchUser, setAntBeans } = useAuthStore();
   const { shopItems, inventory, isLoading, loadShopItems, loadInventory, purchaseItem, equipItem } =
     useShopStore();
-  const [activeTab, setActiveTab] = useState<TabType>('expression');
+  const [activeTab, setActiveTab] = useState<ShopTab>('outfit');
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
-  const [previewExpr, setPreviewExpr] = useState<string | null>(null);
+  const isCompact = screenW < 720;
+
+  // ── 배경 이미지 비율 기반 레이아웃 계산 ──
+  // 배경을 약간 축소하여 화면 안에 맞추고, 가로 중앙·상단 정렬
+  const BG_SCALE = 0.9;
+  const bgW = Math.ceil(screenW * BG_SCALE);
+  const bgH = Math.ceil(bgW * (BG_IMG_H / BG_IMG_W));
+  const bgLeft = Math.round((screenW - bgW) / 2);
+  const bgTop = 0;
+
+  // 개미 캐릭터 크기: 화면 너비의 42% (compact) — 크게 배치
+  const antSize = isCompact ? Math.round(screenW * 0.42) : 236;
+  const antH = antSize * 1.76;
+
+  // 나무 무대 위치 (배경 이미지 좌표 기준)
+  const platformTopY = bgTop + bgH * 0.79;
+  const platformCenterX = bgLeft + bgW * 0.33;
+
+  // 개미 캐릭터 — 발이 무대 표면 위에 오도록 절대 위치 계산
+  const antTop = platformTopY - antH;
+  const antLeft = platformCenterX - antSize / 2;
+
+  // 상점 패널 위치 (배경 이미지 내부 오른쪽)
+  const TAB_BAR_H = 64;
+  const shopPanelTop = bgTop + bgH * 0.15;
+  const shopPanelRight = bgLeft + (isCompact ? 8 : 20);
+  const shopPanelWidth = isCompact ? bgW * 0.55 : 430;
 
   useEffect(() => {
     loadInventory();
@@ -58,21 +111,14 @@ export default function ShopScreen({}: ShopScreenProps) {
     return map;
   }, [inventory]);
 
-  const currentExpression = previewExpr ?? user?.equippedExpressionId ?? null;
+  const currentExpression = user?.equippedExpressionId ?? null;
 
   const handleItemPress = useCallback(
     async (item: AntItem) => {
       if (!user || pendingItemId) return;
 
-      if (activeTab === 'expression') {
-        setPreviewExpr(item.emoji);
-      }
-
       const ownedItem = inventoryByItemId.get(item.id);
-      const isEquipped =
-        activeTab === 'expression'
-          ? user.equippedExpressionId === item.emoji
-          : user.equippedOutfitId === item.id;
+      const isEquipped = isEquippedItem(user, item);
 
       if (isEquipped) return;
 
@@ -109,30 +155,26 @@ export default function ShopScreen({}: ShopScreenProps) {
 
   const renderItem = useCallback(
     ({ item }: { item: AntItem }) => {
-      const isEquipped =
-        activeTab === 'expression'
-          ? user?.equippedExpressionId === item.emoji
-          : user?.equippedOutfitId === item.id;
+      const isEquipped = isEquippedItem(user, item);
       const isPending = pendingItemId === item.id;
-      const isPreview = activeTab === 'expression' && previewExpr === item.emoji;
       const exprImg = getExpressionImage(item.emoji);
 
       return (
         <TouchableOpacity
           style={[
             styles.itemCard,
+            isCompact && styles.itemCardCompact,
             isEquipped && styles.equippedCard,
-            !isEquipped && isPreview && styles.previewCard,
           ]}
           activeOpacity={0.8}
           onPress={() => handleItemPress(item)}
           disabled={isPending}
         >
-          <View style={styles.itemImgWrap}>
+          <View style={[styles.itemImgWrap, isCompact && styles.itemImgWrapCompact]}>
             {exprImg ? (
               <Image source={exprImg} style={styles.itemImg} resizeMode="contain" />
             ) : (
-              <Text style={styles.itemEmoji}>{item.emoji}</Text>
+              <Text style={[styles.itemEmoji, isCompact && styles.itemEmojiCompact]}>{item.emoji}</Text>
             )}
             {isEquipped && (
               <View style={styles.checkCircle}>
@@ -141,7 +183,7 @@ export default function ShopScreen({}: ShopScreenProps) {
             )}
           </View>
 
-          <Text style={styles.itemName} numberOfLines={1}>
+          <Text style={[styles.itemName, isCompact && styles.itemNameCompact]} numberOfLines={1}>
             {item.name}
           </Text>
 
@@ -155,97 +197,140 @@ export default function ShopScreen({}: ShopScreenProps) {
             <View style={styles.priceRow}>
               <Image
                 source={require('../../../assets/icons/antbean.png')}
-                style={styles.beanSmall}
+                style={[styles.beanSmall, isCompact && styles.beanSmallCompact]}
               />
-              <Text style={styles.priceText}>{item.price}</Text>
+              <Text style={[styles.priceText, isCompact && styles.priceTextCompact]}>{item.price}</Text>
             </View>
           )}
         </TouchableOpacity>
       );
     },
-    [activeTab, handleItemPress, pendingItemId, previewExpr, user]
+    [handleItemPress, pendingItemId, user]
   );
 
   return (
     <View style={styles.container}>
-      {/* Cave background */}
+      {/* 배경 이미지: 화면 너비 꽉 채우고, 원본 비율 유지, 상단 정렬 */}
       <Image
         source={require('../../../assets/backgrounds/shop-background.png')}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
+        style={{
+          position: 'absolute',
+          top: bgTop,
+          left: bgLeft,
+          width: bgW,
+          height: bgH,
+        }}
+        resizeMode="stretch"
       />
 
-      <View style={styles.layout}>
-        {/* Left: character preview */}
-        <View style={styles.leftPanel}>
-          <View style={styles.charWrap}>
-            <ClayAntCharacter
-              size="large"
-              rankScore={user?.rankScore ?? 0}
-              equippedExpression={currentExpression}
-              animated
-            />
-          </View>
-          <View style={styles.beanBadge}>
+      {/* 상단 버튼 영역 — 배경 흙 라인 위(하늘 영역) */}
+      <View
+        style={[
+          styles.topBar,
+          {
+            paddingTop: isCompact ? Math.round(bgH * 0.025) : 36,
+            paddingHorizontal: isCompact ? 14 : 22,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.iconButton, isCompact && styles.iconButtonCompact]}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.topIcon, isCompact && styles.topIconCompact]}>‹</Text>
+        </TouchableOpacity>
+
+        <View style={[styles.topActions, isCompact && styles.topActionsCompact]}>
+          <View style={[styles.topBeanBadge, isCompact && styles.topBeanBadgeCompact]}>
             <Image
               source={require('../../../assets/icons/antbean.png')}
-              style={styles.beanIcon}
+              style={[styles.topBeanIcon, isCompact && styles.topBeanIconCompact]}
             />
-            <Text style={styles.beanCount}>{antBeans.toLocaleString()}</Text>
+            <Text style={[styles.topBeanCount, isCompact && styles.topBeanCountCompact]}>
+              {antBeans.toLocaleString()}
+            </Text>
+            <Text style={[styles.plusText, isCompact && styles.plusTextCompact]}>＋</Text>
           </View>
-        </View>
 
-        {/* Right: shop panel */}
-        <View style={styles.rightPanel}>
-          {/* Tabs */}
-          <View style={styles.tabRow}>
+          <TouchableOpacity style={[styles.iconButton, isCompact && styles.iconButtonCompact]} activeOpacity={0.75}>
+            <Text style={[styles.topSmallIcon, isCompact && styles.topSmallIconCompact]}>🎁</Text>
+            <Text style={[styles.iconCaption, isCompact && styles.iconCaptionCompact]}>이벤트</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.iconButton, isCompact && styles.iconButtonCompact]} activeOpacity={0.75}>
+            <Text style={[styles.topSmallIcon, isCompact && styles.topSmallIconCompact]}>⚙</Text>
+            <Text style={[styles.iconCaption, isCompact && styles.iconCaptionCompact]}>설정</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 개미 캐릭터 — 나무 무대 위에 절대 위치 배치 */}
+      <View style={{ position: 'absolute', top: antTop, left: antLeft, zIndex: 2 }}>
+        <ClayAntCharacter
+          size={antSize}
+          rankScore={user?.rankScore ?? 0}
+          equippedExpression={currentExpression}
+          animated
+        />
+      </View>
+
+      {/* 오른쪽: 상점 카드 패널 — 동굴 내부 오른쪽 영역 */}
+      <View
+        style={[
+          styles.rightPanel,
+          isCompact && styles.rightPanelCompact,
+          {
+            position: 'absolute',
+            top: shopPanelTop,
+            right: shopPanelRight,
+            bottom: TAB_BAR_H + 10,
+            width: shopPanelWidth,
+          },
+        ]}
+      >
+        <View style={styles.tabRow}>
+          {SHOP_TABS.map((tab) => (
             <TouchableOpacity
-              style={[styles.tabBtn, activeTab === 'expression' && styles.tabBtnActive]}
+              key={tab.key}
+              style={[styles.tabBtn, activeTab === tab.key && styles.tabBtnActive]}
               onPress={() => {
-                setActiveTab('expression');
-                setPreviewExpr(null);
+                setActiveTab(tab.key);
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.tabIcon}>😊</Text>
-              <Text style={[styles.tabLabel, activeTab === 'expression' && styles.tabLabelActive]}>
-                얼굴
+              <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
+                {tab.label}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tabBtn, activeTab === 'outfit' && styles.tabBtnActive]}
-              onPress={() => setActiveTab('outfit')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.tabIcon}>👕</Text>
-              <Text style={[styles.tabLabel, activeTab === 'outfit' && styles.tabLabelActive]}>
-                옷
-              </Text>
-            </TouchableOpacity>
+          ))}
+        </View>
+
+        {isLoading && filteredItems.length === 0 ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator color={COLORS.clay} size="large" />
           </View>
+        ) : filteredItems.length === 0 ? (
+          <View style={styles.loadingWrap}>
+            <Text style={styles.emptyText}>아이템이 없어요</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredItems}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            key="shop-grid-2"
+            columnWrapperStyle={styles.row}
+            contentContainerStyle={styles.gridContent}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
 
-          <View style={styles.divider} />
-
-          {/* Item grid */}
-          {isLoading && filteredItems.length === 0 ? (
-            <View style={styles.loadingWrap}>
-              <ActivityIndicator color={COLORS.clay} size="large" />
-            </View>
-          ) : filteredItems.length === 0 ? (
-            <View style={styles.loadingWrap}>
-              <Text style={styles.emptyText}>아이템이 없어요</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={filteredItems}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.id}
-              numColumns={3}
-              columnWrapperStyle={styles.row}
-              contentContainerStyle={styles.gridContent}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
+        <View style={styles.refreshRow}>
+          <Text style={styles.refreshText}>상품 갱신까지</Text>
+          <Text style={styles.refreshTime}>23:59:59</Text>
+          <Text style={styles.refreshIcon}>↻</Text>
         </View>
       </View>
     </View>
@@ -255,198 +340,317 @@ export default function ShopScreen({}: ShopScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  layout: {
-    flex: 1,
-    flexDirection: 'row',
-    paddingTop: 52,
-    paddingBottom: 80,
+    backgroundColor: '#3A2917', // 배경 이미지 하단과 이어지는 흙 색상
   },
 
-  // ── Left panel ──
-  leftPanel: {
-    flex: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 12,
-  },
-  charWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  beanBadge: {
+  /* ── 상단 버튼 바 ── */
+  topBar: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 3,
+  },
+  topActions: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 16,
+  },
+  topActionsCompact: {
+    gap: 8,
+  },
+  iconButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(248, 240, 224, 0.9)',
-    borderRadius: 20,
+    borderColor: '#8E765C',
+    borderRadius: 18,
+    borderWidth: 1.5,
+    height: 54,
+    justifyContent: 'center',
+    minWidth: 54,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
   },
-  beanIcon: {
-    width: 22,
-    height: 22,
+  iconButtonCompact: {
+    borderRadius: 14,
+    height: 44,
+    minWidth: 44,
+    paddingHorizontal: 8,
   },
-  beanCount: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
+  topIcon: {
+    color: '#2E2924',
+    fontSize: 40,
+    lineHeight: 42,
+    marginTop: -4,
   },
-
-  // ── Right panel ──
-  rightPanel: {
-    flex: 6,
-    backgroundColor: 'rgba(251, 247, 242, 0.97)',
-    borderRadius: 20,
-    marginTop: 8,
-    marginBottom: 8,
-    marginRight: 8,
-    overflow: 'hidden',
+  topIconCompact: {
+    fontSize: 34,
+    lineHeight: 36,
   },
-
-  // ── Tabs ──
-  tabRow: {
+  topSmallIcon: {
+    color: '#2E2924',
+    fontSize: 25,
+    lineHeight: 28,
+  },
+  topSmallIconCompact: {
+    fontSize: 20,
+    lineHeight: 23,
+  },
+  iconCaption: {
+    bottom: -26,
+    color: '#4C3F33',
+    fontSize: 12,
+    fontWeight: '700',
+    position: 'absolute',
+  },
+  iconCaptionCompact: {
+    bottom: -22,
+    fontSize: 10,
+  },
+  topBeanBadge: {
+    alignItems: 'center',
+    borderColor: '#8E765C',
+    borderRadius: 28,
+    borderWidth: 1.5,
     flexDirection: 'row',
+    gap: 10,
+    height: 54,
+    paddingHorizontal: 20,
+  },
+  topBeanBadgeCompact: {
+    gap: 7,
+    height: 44,
+    paddingHorizontal: 12,
+  },
+  topBeanIcon: {
+    height: 24,
+    width: 24,
+  },
+  topBeanIconCompact: {
+    height: 18,
+    width: 18,
+  },
+  topBeanCount: {
+    color: '#2E2924',
+    fontSize: 24,
+    fontWeight: '800',
+    minWidth: 64,
+    textAlign: 'center',
+  },
+  topBeanCountCompact: {
+    fontSize: 18,
+    minWidth: 44,
+  },
+  plusText: {
+    color: '#2E2924',
+    fontSize: 31,
+    lineHeight: 32,
+  },
+  plusTextCompact: {
+    fontSize: 24,
+    lineHeight: 25,
+  },
+
+  /* ── 오른쪽: 상점 카드 패널 (절대 위치, width/top/right/bottom은 인라인) ── */
+  rightPanel: {
+    backgroundColor: 'rgba(255, 250, 243, 0.73)',
+    borderColor: '#9A7D60',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    paddingBottom: 46,
+    paddingHorizontal: 18,
+    paddingTop: 20,
+  },
+  rightPanelCompact: {
+    borderRadius: 18,
+    paddingBottom: 36,
     paddingHorizontal: 10,
     paddingTop: 12,
-    paddingBottom: 8,
-    gap: 6,
+  },
+
+  /* ── 탭 버튼 ── */
+  tabRow: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
   tabBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    flex: 1,
+    height: 40,
+    justifyContent: 'center',
     borderRadius: 999,
-    gap: 4,
   },
   tabBtnActive: {
-    backgroundColor: COLORS.clay,
-  },
-  tabIcon: {
-    fontSize: 13,
+    backgroundColor: '#9B7653',
   },
   tabLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textSecondary,
+    color: '#735C47',
+    fontSize: 15,
+    fontWeight: '800',
   },
   tabLabelActive: {
     color: '#fff',
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.borderSoft,
-    marginHorizontal: 10,
-    marginBottom: 8,
-  },
 
-  // ── Grid ──
+  /* ── 아이템 그리드 ── */
   loadingWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
+    color: '#735C47',
+    fontSize: 15,
+    fontWeight: '700',
   },
   gridContent: {
-    paddingHorizontal: 8,
-    paddingBottom: 12,
+    gap: 10,
+    paddingBottom: 10,
   },
   row: {
-    gap: 4,
-    marginBottom: 4,
+    gap: 10,
+    marginBottom: 10,
   },
 
-  // ── Item card ──
   itemCard: {
-    width: ITEM_W,
-    backgroundColor: COLORS.surfaceSoft,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: 'transparent',
     alignItems: 'center',
-    padding: 6,
+    backgroundColor: 'rgba(255, 248, 239, 0.52)',
+    borderColor: 'rgba(154, 125, 96, 0.32)',
+    borderRadius: 18,
+    borderWidth: 2,
+    flex: 1,
+    minHeight: 168,
+    paddingBottom: 14,
+    paddingHorizontal: 8,
+    paddingTop: 12,
+  },
+  itemCardCompact: {
+    borderRadius: 14,
+    minHeight: 116,
     paddingBottom: 8,
+    paddingHorizontal: 5,
+    paddingTop: 7,
   },
   equippedCard: {
-    borderColor: COLORS.clay,
-    backgroundColor: '#FFF8F2',
+    backgroundColor: 'rgba(255, 248, 239, 0.84)',
+    borderColor: '#9B7653',
   },
   previewCard: {
     borderColor: COLORS.stone,
   },
   itemImgWrap: {
-    width: ITEM_W - 16,
-    height: ITEM_W - 16,
-    borderRadius: 10,
-    backgroundColor: '#EDE7DF',
     alignItems: 'center',
+    height: 72,
     justifyContent: 'center',
+    marginBottom: 10,
     overflow: 'hidden',
+    width: '100%',
+  },
+  itemImgWrapCompact: {
+    height: 44,
+    marginBottom: 5,
   },
   itemImg: {
-    width: '88%',
-    height: '88%',
+    height: '100%',
+    width: '100%',
   },
   itemEmoji: {
-    fontSize: 28,
+    fontSize: 46,
+  },
+  itemEmojiCompact: {
+    fontSize: 30,
   },
   checkCircle: {
     position: 'absolute',
-    top: 3,
-    right: 3,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: COLORS.clay,
+    top: 0,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#9B7653',
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkMark: {
     color: '#fff',
-    fontSize: 9,
+    fontSize: 12,
     fontWeight: '800',
   },
   itemName: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginTop: 5,
+    color: '#211B16',
+    fontSize: 16,
+    fontWeight: '800',
+    minHeight: 22,
     textAlign: 'center',
+  },
+  itemNameCompact: {
+    fontSize: 11,
+    minHeight: 16,
   },
   itemStatus: {
     marginTop: 4,
   },
   equippedBadge: {
-    marginTop: 4,
-    backgroundColor: COLORS.clay,
+    backgroundColor: '#9B7653',
     borderRadius: 999,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
   equippedText: {
     color: '#fff',
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    marginTop: 4,
+    gap: 4,
+    marginTop: 6,
   },
   beanSmall: {
-    width: 11,
-    height: 11,
+    width: 18,
+    height: 18,
+  },
+  beanSmallCompact: {
+    height: 13,
+    width: 13,
   },
   priceText: {
-    fontSize: 10,
+    color: '#211B16',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  priceTextCompact: {
+    fontSize: 13,
+  },
+  refreshRow: {
+    alignItems: 'center',
+    bottom: 12,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'flex-end',
+    left: 14,
+    position: 'absolute',
+    right: 14,
+  },
+  refreshText: {
+    color: '#4B3B2E',
+    fontSize: 12,
     fontWeight: '700',
-    color: COLORS.textSecondary,
+  },
+  refreshTime: {
+    color: '#211B16',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  refreshIcon: {
+    color: '#211B16',
+    fontSize: 24,
+    lineHeight: 25,
   },
 });
