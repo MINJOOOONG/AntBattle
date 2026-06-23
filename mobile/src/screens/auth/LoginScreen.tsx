@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { useAuthStore } from '../../store/authStore';
 import Button from '../../components/common/Button';
@@ -9,21 +9,35 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
   const [handle, setHandle] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const login = useAuthStore((s) => s.login);
 
   const handleLogin = async () => {
+    setError(null);
+    setStatusMsg(null);
+
     if (!handle.trim() || !password) {
-      Alert.alert('입력 오류', '핸들과 비밀번호를 모두 입력해주세요.');
+      setError('핸들과 비밀번호를 모두 입력해주세요.');
       return;
     }
     setLoading(true);
+    setStatusMsg('서버에 연결 중... (처음 접속 시 30-60초 소요될 수 있습니다)');
+
+    let done = false;
     try {
       await login(handle.trim(), password);
+      done = true;
     } catch (e: any) {
-      const msg = e?.response?.data?.error?.message ?? '로그인에 실패했습니다.';
-      Alert.alert('로그인 실패', msg);
+      const msg = e?.response?.data?.error?.message
+        ?? e?.message
+        ?? '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
+      setError(msg);
     } finally {
-      setLoading(false);
+      if (!done) {
+        setLoading(false);
+        setStatusMsg(null);
+      }
     }
   };
 
@@ -32,6 +46,18 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.emoji}>🐜</Text>
         <Text style={styles.title}>개미배틀</Text>
+
+        {error && (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
+        {statusMsg && !error && (
+          <View style={styles.statusBox}>
+            <Text style={styles.statusText}>{statusMsg}</Text>
+          </View>
+        )}
 
         <View style={styles.form}>
           <Text style={styles.label}>핸들</Text>
@@ -42,6 +68,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
             placeholder="@handle"
             autoCapitalize="none"
             autoCorrect={false}
+            editable={!loading}
           />
 
           <Text style={styles.label}>비밀번호</Text>
@@ -51,6 +78,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
             onChangeText={setPassword}
             placeholder="비밀번호"
             secureTextEntry
+            editable={!loading}
           />
 
           <Button title="로그인" onPress={handleLogin} loading={loading} style={{ marginTop: 16 }} />
@@ -59,6 +87,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
             onPress={() => navigation.navigate('Signup')}
             variant="secondary"
             style={{ marginTop: 12 }}
+            disabled={loading}
           />
         </View>
 
@@ -92,6 +121,28 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: 40,
+  },
+  errorBox: {
+    backgroundColor: '#FDECEA',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#C0392B',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  statusBox: {
+    backgroundColor: '#EAF4FB',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  statusText: {
+    color: '#2471A3',
+    fontSize: 13,
+    textAlign: 'center',
   },
   form: {
     gap: 4,
