@@ -253,6 +253,12 @@ View 기반 클레이 개미 캐릭터:
 
 ### BattleResultScreen → "승부 결과"
 
+### ShopScreen → "상점"
+
+- 배경 이미지: `mobile/assets/backgrounds/shop-background.png`
+- 배경 이미지 원본 사이즈: 941 × 1672 px
+- `Image`는 전체 화면에 absolute fill로 깔고 `resizeMode="cover"`를 사용한다.
+
 ## 애니메이션
 
 ### 개미 크기 변화
