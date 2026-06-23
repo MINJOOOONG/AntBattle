@@ -12,4 +12,4 @@ COPY . .
 RUN npm run build
 
 EXPOSE 3000
-CMD npx prisma migrate deploy && npm start
+CMD npx prisma migrate deploy && npx prisma db seed && npm start
