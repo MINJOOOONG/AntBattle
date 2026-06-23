@@ -10,22 +10,26 @@
   <title>개미배틀 / AntBattle CEO Intro</title>
   <style>
     :root {
-      --bg: #fff8ec;
-      --bg-2: #f7ebd5;
-      --ink: #2f2219;
-      --muted: #735f4b;
-      --brown: #7b4d2a;
-      --brown-dark: #4a2a18;
-      --bean: #f0b84e;
-      --bean-deep: #d88924;
-      --cream: #fffdf7;
-      --green: #2fa66a;
-      --green-soft: #dff4df;
-      --sky: #71b7d8;
-      --pink: #f3a1a1;
-      --line: rgba(92, 60, 35, 0.18);
-      --shadow: 0 22px 60px rgba(84, 49, 24, 0.16);
-      --radius: 8px;
+      --bg: #FAFAFA;
+      --ink: #111111;
+      --muted: #666666;
+      /* 개미 캐릭터 전용 브라운 */
+      --ant-mid: #7b4d2a;
+      --ant-dark: #4a2a18;
+      /* 오렌지 액센트 */
+      --accent: #FF7A00;
+      --accent-deep: #E56A00;
+      --accent-soft: rgba(255, 122, 0, 0.09);
+      /* 서피스 */
+      --surface: #FFFFFF;
+      /* 상태 색상 */
+      --green: #1A9F5C;
+      --green-soft: #E6F7EF;
+      --red: #E63946;
+      /* 보조 */
+      --line: rgba(17, 17, 17, 0.09);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+      --radius: 12px;
       --max: 1180px;
     }
 
@@ -42,10 +46,7 @@
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       line-height: 1.55;
-      background:
-        radial-gradient(circle at top left, rgba(47, 166, 106, 0.16), transparent 34rem),
-        radial-gradient(circle at 88% 8%, rgba(113, 183, 216, 0.18), transparent 30rem),
-        linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 100%);
+      background: var(--bg);
       letter-spacing: 0;
     }
 
@@ -73,7 +74,7 @@
       min-width: 168px;
       gap: 10px;
       font-weight: 900;
-      color: var(--brown-dark);
+      color: var(--ink);
     }
 
     .mini-ant {
@@ -88,7 +89,7 @@
       position: absolute;
       content: "";
       border-radius: 50%;
-      background: var(--brown);
+      background: var(--ant-mid);
       box-shadow: inset -4px -5px 0 rgba(0, 0, 0, 0.08);
     }
 
@@ -120,8 +121,8 @@
       padding: 6px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255, 253, 247, 0.78);
-      box-shadow: 0 10px 30px rgba(84, 49, 24, 0.08);
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     }
 
     .nav-pills::-webkit-scrollbar {
@@ -145,7 +146,7 @@
     .nav-pills a:focus-visible,
     .nav-pills a[aria-current="true"] {
       outline: 0;
-      background: var(--brown);
+      background: var(--ink);
       color: #fff;
     }
 
@@ -155,15 +156,15 @@
       justify-content: center;
       min-height: 42px;
       padding: 0 16px;
-      border: 1px solid rgba(74, 42, 24, 0.2);
+      border: 1.5px solid var(--accent);
       border-radius: 999px;
-      background: var(--brown-dark);
+      background: var(--accent);
       color: #fff;
       text-decoration: none;
       font-size: 14px;
       font-weight: 800;
       white-space: nowrap;
-      box-shadow: 0 12px 28px rgba(74, 42, 24, 0.18);
+      box-shadow: 0 8px 24px rgba(255, 122, 0, 0.22);
     }
 
     main {
@@ -174,7 +175,7 @@
 
     .deck {
       display: grid;
-      gap: 24px;
+      gap: 20px;
     }
 
     .slide {
@@ -185,11 +186,9 @@
       min-height: min(720px, calc(100svh - 112px));
       overflow: hidden;
       padding: clamp(26px, 5vw, 64px);
-      border: 1px solid rgba(92, 60, 35, 0.16);
+      border: 1px solid var(--line);
       border-radius: var(--radius);
-      background:
-        linear-gradient(145deg, rgba(255, 253, 247, 0.97), rgba(255, 247, 231, 0.92)),
-        var(--cream);
+      background: var(--surface);
       box-shadow: var(--shadow);
       scroll-margin-top: 86px;
       cursor: pointer;
@@ -202,7 +201,7 @@
       height: 310px;
       content: "";
       border-radius: 50%;
-      background: rgba(240, 184, 78, 0.2);
+      background: var(--accent-soft);
     }
 
     .slide::after {
@@ -210,11 +209,11 @@
       left: clamp(22px, 4vw, 48px);
       bottom: 24px;
       width: 108px;
-      height: 10px;
+      height: 6px;
       content: "";
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--bean), var(--green), var(--sky));
-      opacity: 0.52;
+      background: linear-gradient(90deg, var(--accent), var(--ink));
+      opacity: 0.7;
     }
 
     .slide-content,
@@ -229,7 +228,7 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 20px;
-      color: var(--bean-deep);
+      color: var(--accent);
       font-size: 14px;
       font-weight: 900;
       letter-spacing: 0;
@@ -240,8 +239,8 @@
       height: 9px;
       content: "";
       border-radius: 50%;
-      background: var(--green);
-      box-shadow: 14px 0 0 var(--bean), 28px 0 0 var(--sky);
+      background: var(--accent);
+      box-shadow: 14px 0 0 var(--ink), 28px 0 0 rgba(17, 17, 17, 0.25);
     }
 
     h1,
@@ -253,7 +252,7 @@
 
     h1 {
       margin-bottom: 18px;
-      color: var(--brown-dark);
+      color: var(--ink);
       font-size: 104px;
       line-height: 0.95;
       letter-spacing: 0;
@@ -262,7 +261,7 @@
     h2 {
       max-width: 760px;
       margin-bottom: 20px;
-      color: var(--brown-dark);
+      color: var(--ink);
       font-size: 64px;
       line-height: 1.04;
       letter-spacing: 0;
@@ -298,10 +297,10 @@
       gap: 8px;
       min-height: 38px;
       padding: 0 14px;
-      border: 1px solid rgba(123, 77, 42, 0.18);
+      border: 1.5px solid rgba(17, 17, 17, 0.13);
       border-radius: 999px;
-      background: rgba(255, 253, 247, 0.76);
-      color: var(--brown);
+      background: var(--surface);
+      color: var(--ink);
       font-size: 14px;
       font-weight: 850;
       white-space: nowrap;
@@ -311,7 +310,7 @@
       width: 9px;
       height: 9px;
       border-radius: 50%;
-      background: var(--green);
+      background: var(--accent);
     }
 
     .slide-visual {
@@ -328,9 +327,9 @@
       aspect-ratio: 1;
       border-radius: 28px;
       background:
-        radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.8), transparent 22%),
-        linear-gradient(160deg, rgba(240, 184, 78, 0.24), rgba(47, 166, 106, 0.12));
-      border: 1px solid rgba(123, 77, 42, 0.14);
+        radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.9), transparent 22%),
+        linear-gradient(160deg, var(--accent-soft), rgba(17, 17, 17, 0.03));
+      border: 1px solid var(--line);
     }
 
     .mascot-stage::before {
@@ -341,9 +340,10 @@
       height: 48px;
       content: "";
       border-radius: 50%;
-      background: var(--bean);
+      background: var(--accent);
       transform: rotate(-18deg);
-      box-shadow: inset -8px -10px 0 rgba(216, 137, 36, 0.35);
+      box-shadow: inset -8px -10px 0 rgba(0, 0, 0, 0.15);
+      opacity: 0.85;
     }
 
     .mascot-stage::after {
@@ -351,7 +351,7 @@
       left: 10%;
       bottom: 12%;
       content: "AntBattle";
-      color: rgba(74, 42, 24, 0.5);
+      color: rgba(17, 17, 17, 0.3);
       font-size: 14px;
       font-weight: 950;
     }
@@ -437,7 +437,7 @@
       position: absolute;
       width: 55px;
       height: 44px;
-      border-top: 4px solid var(--brown-dark);
+      border-top: 4px solid var(--ant-dark);
       border-radius: 50%;
       content: "";
     }
@@ -460,14 +460,14 @@
       width: 14px;
       height: 14px;
       border: 0;
-      background: var(--bean);
+      background: var(--accent);
     }
 
     .leg {
       position: absolute;
       width: 70px;
       height: 44px;
-      border-bottom: 5px solid var(--brown-dark);
+      border-bottom: 5px solid var(--ant-dark);
       border-radius: 50%;
     }
 
@@ -516,11 +516,11 @@
       width: 82px;
       height: 82px;
       border-radius: 32px 32px 44px 44px;
-      background: linear-gradient(160deg, #f3c869, #d88924);
-      color: #523112;
+      background: linear-gradient(160deg, #FF9933, var(--accent-deep));
+      color: #fff;
       font-weight: 950;
       transform: rotate(-10deg);
-      box-shadow: 0 15px 28px rgba(216, 137, 36, 0.26);
+      box-shadow: 0 12px 28px rgba(255, 122, 0, 0.3);
     }
 
     .visual-panel {
@@ -533,15 +533,15 @@
       display: grid;
       gap: 8px;
       padding: 18px;
-      border: 1px solid rgba(123, 77, 42, 0.14);
+      border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 253, 247, 0.78);
+      background: var(--surface);
     }
 
     .metric strong {
       font-size: 30px;
       line-height: 1.1;
-      color: var(--brown-dark);
+      color: var(--ink);
     }
 
     .metric span {
@@ -562,10 +562,10 @@
       align-items: center;
       gap: 12px;
       padding: 14px;
-      border: 1px solid rgba(74, 42, 24, 0.14);
+      border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 253, 247, 0.82);
-      color: var(--brown-dark);
+      background: var(--surface);
+      color: var(--ink);
       font-weight: 850;
     }
 
@@ -575,8 +575,8 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: var(--green-soft);
-      color: var(--green);
+      background: var(--accent-soft);
+      color: var(--accent);
     }
 
     .bean-grid {
@@ -589,9 +589,9 @@
     .bean-item {
       min-height: 124px;
       padding: 18px;
-      border: 1px solid rgba(123, 77, 42, 0.14);
+      border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 253, 247, 0.78);
+      background: var(--surface);
     }
 
     .bean-item .bean-icon {
@@ -600,15 +600,15 @@
       height: 25px;
       margin-bottom: 12px;
       border-radius: 50%;
-      background: var(--bean);
+      background: var(--accent);
       transform: rotate(-18deg);
-      box-shadow: inset -5px -7px 0 rgba(216, 137, 36, 0.35);
+      box-shadow: inset -5px -7px 0 rgba(0, 0, 0, 0.15);
     }
 
     .bean-item strong {
       display: block;
       margin-bottom: 4px;
-      color: var(--brown-dark);
+      color: var(--ink);
       font-size: 17px;
     }
 
@@ -621,9 +621,9 @@
     .battle-board {
       width: min(100%, 430px);
       padding: 20px;
-      border: 1px solid rgba(123, 77, 42, 0.16);
+      border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 253, 247, 0.82);
+      background: var(--surface);
     }
 
     .battle-row {
@@ -652,17 +652,17 @@
     }
 
     .loss {
-      color: #c4514c;
+      color: var(--red);
       font-size: 20px;
       font-weight: 950;
     }
 
     .script-section {
-      margin-top: 28px;
+      margin-top: 20px;
       padding: clamp(26px, 4vw, 48px);
-      border: 1px solid rgba(92, 60, 35, 0.16);
+      border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: rgba(255, 253, 247, 0.92);
+      background: var(--surface);
       box-shadow: var(--shadow);
       scroll-margin-top: 86px;
     }
@@ -686,7 +686,7 @@
       min-height: 38px;
       padding: 0 14px;
       border-radius: 999px;
-      background: var(--brown-dark);
+      background: var(--ink);
       color: #fff;
       font-size: 14px;
       font-weight: 900;
