@@ -100,7 +100,7 @@ export default function HomeScreen(_props: HomeScreenProps) {
       {/* 배경 이미지 */}
       <View style={styles.backgroundWrap} pointerEvents="none">
         <Image
-          source={require('../../../assets/backgrounds/home-background-2.png')}
+          source={require('../../../assets/backgrounds/home-background-3.png')}
           style={styles.backgroundImage}
           resizeMode="cover"
         />
