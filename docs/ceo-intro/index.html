@@ -346,13 +346,115 @@
       opacity: 0.85;
     }
 
-    .mascot-img {
-      width: 72%;
-      height: 72%;
-      object-fit: contain;
+    .ant-wrap {
       position: relative;
+      width: 72%;
+      aspect-ratio: 1;
       z-index: 1;
-      drop-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+
+    .ant-body {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .ant-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* 슬라이드 오른쪽 상단 장식용 face_blank */
+    .face-deco {
+      position: absolute;
+      top: clamp(12px, 3vw, 28px);
+      right: clamp(12px, 3vw, 28px);
+      width: clamp(52px, 7vw, 88px);
+      opacity: 0.13;
+      pointer-events: none;
+      z-index: 0;
+      user-select: none;
+    }
+
+    /* 얼굴 쇼케이스 (slide-6) */
+    .face-showcase {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: min(100%, 390px);
+    }
+
+    .face-showcase-main {
+      width: 62%;
+      aspect-ratio: 1;
+      border-radius: 28px;
+      background: var(--accent-soft);
+      border: 1.5px solid rgba(255, 122, 0, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10%;
+    }
+
+    .face-showcase-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .face-showcase-label {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+    }
+
+    .face-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .face-chip {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+    }
+
+    .face-chip.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .face-chip img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .face-chip-more {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--muted);
+      font-weight: 900;
     }
 
     .visual-panel {
@@ -743,12 +845,16 @@
         </div>
         <div class="slide-visual" aria-hidden="true">
           <div class="mascot-stage">
-            <img src="ant_idle.png" alt="개미배틀 마스코트" class="mascot-img" draggable="false">
+            <div class="ant-wrap">
+              <img src="ant_idle.png" alt="개미배틀 마스코트" class="ant-body" draggable="false">
+              <img src="face_blank.png" alt="" class="ant-face" draggable="false">
+            </div>
           </div>
         </div>
       </article>
 
       <article class="slide" id="slide-2">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">02 Problem</div>
           <h2>문제</h2>
@@ -770,6 +876,7 @@
       </article>
 
       <article class="slide" id="slide-3">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">03 Solution</div>
           <h2>해결책</h2>
@@ -804,6 +911,7 @@
       </article>
 
       <article class="slide" id="slide-4">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">04 How It Works</div>
           <h2>서비스 방식</h2>
@@ -821,6 +929,7 @@
       </article>
 
       <article class="slide" id="slide-5">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">05 Game Loop</div>
           <h2>게임 요소</h2>
@@ -838,6 +947,7 @@
       </article>
 
       <article class="slide" id="slide-6">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">06 Mascot & Brand</div>
           <h2>마스코트 / 브랜딩</h2>
@@ -845,29 +955,24 @@
           <p class="copy">개미는 개인 투자자를 상징하는 친근한 브랜드 자산입니다. 캐릭터 꾸미기는 사용자의 애착을 만들고, 서비스의 귀여운 정체성을 강화합니다.</p>
         </div>
         <div class="slide-visual" aria-hidden="true">
-          <div class="mascot-stage">
-            <div class="ant">
-              <span class="antenna left"></span>
-              <span class="antenna right"></span>
-              <span class="leg l1"></span>
-              <span class="leg l2"></span>
-              <span class="leg l3"></span>
-              <span class="leg r1"></span>
-              <span class="leg r2"></span>
-              <span class="leg r3"></span>
-              <span class="head"></span>
-              <span class="body"></span>
-              <span class="belly"></span>
-              <span class="eye left"></span>
-              <span class="eye right"></span>
-              <span class="smile"></span>
-              <span class="bean-bag">상점</span>
+          <div class="face-showcase">
+            <div class="face-showcase-main">
+              <img src="face_blank.png" alt="무표정 기본 표정">
+            </div>
+            <p class="face-showcase-label">무표정 · 기본 표정</p>
+            <div class="face-row">
+              <div class="face-chip active"><img src="face_blank.png" alt="무표정"></div>
+              <div class="face-chip-more">😊</div>
+              <div class="face-chip-more">😠</div>
+              <div class="face-chip-more">😱</div>
+              <div class="face-chip-more">😢</div>
             </div>
           </div>
         </div>
       </article>
 
       <article class="slide" id="slide-7">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">07 Business Model</div>
           <h2>수익모델</h2>
@@ -885,6 +990,7 @@
       </article>
 
       <article class="slide" id="slide-8">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">08 Target</div>
           <h2>타깃</h2>
@@ -910,6 +1016,7 @@
       </article>
 
       <article class="slide" id="slide-9">
+        <img src="face_blank.png" alt="" class="face-deco" draggable="false">
         <div class="slide-content">
           <div class="slide-kicker">09 Vision</div>
           <h2>비전</h2>
