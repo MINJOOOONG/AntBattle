@@ -346,181 +346,13 @@
       opacity: 0.85;
     }
 
-    .mascot-stage::after {
-      position: absolute;
-      left: 10%;
-      bottom: 12%;
-      content: "AntBattle";
-      color: rgba(17, 17, 17, 0.3);
-      font-size: 14px;
-      font-weight: 950;
-    }
-
-    .ant {
+    .mascot-img {
+      width: 72%;
+      height: 72%;
+      object-fit: contain;
       position: relative;
-      width: 230px;
-      height: 250px;
-    }
-
-    .ant .body,
-    .ant .head,
-    .ant .belly {
-      position: absolute;
-      border-radius: 50%;
-      background: linear-gradient(145deg, #9a6338, #5d341e);
-      box-shadow: inset -14px -16px 0 rgba(0, 0, 0, 0.14), 0 18px 30px rgba(74, 42, 24, 0.2);
-    }
-
-    .ant .head {
-      top: 28px;
-      left: 58px;
-      width: 106px;
-      height: 94px;
-    }
-
-    .ant .body {
-      top: 100px;
-      left: 76px;
-      width: 92px;
-      height: 86px;
-    }
-
-    .ant .belly {
-      top: 154px;
-      left: 102px;
-      width: 88px;
-      height: 74px;
-      transform: rotate(17deg);
-    }
-
-    .eye {
-      position: absolute;
-      top: 58px;
-      width: 22px;
-      height: 28px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.1);
-    }
-
-    .eye.left {
-      left: 88px;
-    }
-
-    .eye.right {
-      left: 125px;
-    }
-
-    .eye::after {
-      position: absolute;
-      left: 8px;
-      top: 9px;
-      width: 8px;
-      height: 10px;
-      content: "";
-      border-radius: 50%;
-      background: #231711;
-    }
-
-    .smile {
-      position: absolute;
-      left: 100px;
-      top: 91px;
-      width: 42px;
-      height: 22px;
-      border-bottom: 4px solid #2b1910;
-      border-radius: 50%;
-    }
-
-    .antenna,
-    .antenna::after {
-      position: absolute;
-      width: 55px;
-      height: 44px;
-      border-top: 4px solid var(--ant-dark);
-      border-radius: 50%;
-      content: "";
-    }
-
-    .antenna.left {
-      top: 10px;
-      left: 57px;
-      transform: rotate(-26deg);
-    }
-
-    .antenna.right {
-      top: 10px;
-      left: 128px;
-      transform: scaleX(-1) rotate(-26deg);
-    }
-
-    .antenna::after {
-      right: -8px;
-      top: -8px;
-      width: 14px;
-      height: 14px;
-      border: 0;
-      background: var(--accent);
-    }
-
-    .leg {
-      position: absolute;
-      width: 70px;
-      height: 44px;
-      border-bottom: 5px solid var(--ant-dark);
-      border-radius: 50%;
-    }
-
-    .leg.l1 {
-      top: 118px;
-      left: 26px;
-      transform: rotate(22deg);
-    }
-
-    .leg.l2 {
-      top: 156px;
-      left: 34px;
-      transform: rotate(-8deg);
-    }
-
-    .leg.l3 {
-      top: 188px;
-      left: 58px;
-      transform: rotate(-30deg);
-    }
-
-    .leg.r1 {
-      top: 118px;
-      right: 20px;
-      transform: scaleX(-1) rotate(22deg);
-    }
-
-    .leg.r2 {
-      top: 156px;
-      right: 24px;
-      transform: scaleX(-1) rotate(-8deg);
-    }
-
-    .leg.r3 {
-      top: 188px;
-      right: 38px;
-      transform: scaleX(-1) rotate(-30deg);
-    }
-
-    .bean-bag {
-      position: absolute;
-      right: 22px;
-      bottom: 28px;
-      display: grid;
-      place-items: center;
-      width: 82px;
-      height: 82px;
-      border-radius: 32px 32px 44px 44px;
-      background: linear-gradient(160deg, #FF9933, var(--accent-deep));
-      color: #fff;
-      font-weight: 950;
-      transform: rotate(-10deg);
-      box-shadow: 0 12px 28px rgba(255, 122, 0, 0.3);
+      z-index: 1;
+      drop-shadow: 0 20px 40px rgba(0,0,0,0.12);
     }
 
     .visual-panel {
@@ -911,23 +743,7 @@
         </div>
         <div class="slide-visual" aria-hidden="true">
           <div class="mascot-stage">
-            <div class="ant">
-              <span class="antenna left"></span>
-              <span class="antenna right"></span>
-              <span class="leg l1"></span>
-              <span class="leg l2"></span>
-              <span class="leg l3"></span>
-              <span class="leg r1"></span>
-              <span class="leg r2"></span>
-              <span class="leg r3"></span>
-              <span class="head"></span>
-              <span class="body"></span>
-              <span class="belly"></span>
-              <span class="eye left"></span>
-              <span class="eye right"></span>
-              <span class="smile"></span>
-              <span class="bean-bag">콩</span>
-            </div>
+            <img src="ant_idle.png" alt="개미배틀 마스코트" class="mascot-img" draggable="false">
           </div>
         </div>
       </article>
