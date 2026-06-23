@@ -8,8 +8,12 @@ import { errorHandler } from './middleware/errorHandler';
 const app = express();
 
 // 미들웨어
-app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json());
 app.use(morgan('dev'));
 
