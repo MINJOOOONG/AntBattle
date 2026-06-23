@@ -99,12 +99,14 @@ async function main() {
 
   console.log(`Seeded ${MOCK_STOCKS.length} stocks with price history`);
 
-  // 아이템 데이터 삽입 (기존 데이터 삭제 후 재생성)
-  await prisma.userItem.deleteMany({});
-  await prisma.antItem.deleteMany({});
-  await prisma.antItem.createMany({ data: MOCK_ITEMS });
-
-  console.log(`Seeded ${MOCK_ITEMS.length} shop items`);
+  // 아이템 데이터 삽입 — 이미 존재하면 스킵 (운영 데이터 보호)
+  const existingItemCount = await prisma.antItem.count();
+  if (existingItemCount === 0) {
+    await prisma.antItem.createMany({ data: MOCK_ITEMS });
+    console.log(`Seeded ${MOCK_ITEMS.length} shop items`);
+  } else {
+    console.log(`Shop items already exist (${existingItemCount}), skipping`);
+  }
 
   // 테스트 유저 2명 생성 (비밀번호: test1234)
   const testPassword = await bcrypt.hash('test1234', BCRYPT_ROUNDS);
