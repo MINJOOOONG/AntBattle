@@ -1,330 +1,452 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
+  FlatList,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { COLORS } from '../../constants/colors';
-import { EXPRESSION_ASSETS, EXPRESSION_ITEMS, isExpressionKey } from '../../constants/expressionAssets';
+import { EXPRESSION_ASSETS, isExpressionKey } from '../../constants/expressionAssets';
 import ClayAntCharacter from '../../components/ant/ClayAntCharacter';
-import PastelButton from '../../components/common/PastelButton';
 import { useAuthStore } from '../../store/authStore';
 import { useShopStore } from '../../store/shopStore';
 import { AntItem, UserItem } from '../../types/models';
 import type { MainTabScreenProps } from '../../navigation/types';
 
 type ShopScreenProps = MainTabScreenProps<'Shop'>;
+type TabType = 'expression' | 'outfit';
 
-const FACE_PRICE = 10;
+const SCREEN_W = Dimensions.get('window').width;
+// right panel is flex:6 of total, with 8px right margin
+const RIGHT_PANEL_W = SCREEN_W * 0.6 - 8;
+// 3 cols, 8px horizontal padding each side, 4px gap between cols
+const ITEM_W = Math.floor((RIGHT_PANEL_W - 16 - 8) / 3);
 
-function getExpressionImage(item: AntItem) {
-  return isExpressionKey(item.emoji) ? EXPRESSION_ASSETS[item.emoji] : undefined;
+function getExpressionImage(emoji: string) {
+  return isExpressionKey(emoji) ? EXPRESSION_ASSETS[emoji] : undefined;
 }
 
 export default function ShopScreen({}: ShopScreenProps) {
   const { user, antBeans, patchUser, setAntBeans } = useAuthStore();
-  const {
-    shopItems,
-    inventory,
-    isLoading,
-    loadShopItems,
-    loadInventory,
-    purchaseItem,
-    equipItem,
-  } = useShopStore();
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { shopItems, inventory, isLoading, loadShopItems, loadInventory, purchaseItem, equipItem } =
+    useShopStore();
+  const [activeTab, setActiveTab] = useState<TabType>('expression');
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
+  const [previewExpr, setPreviewExpr] = useState<string | null>(null);
 
   useEffect(() => {
-    loadShopItems('expression');
     loadInventory();
-  }, [loadInventory, loadShopItems]);
+  }, [loadInventory]);
 
-  const sortedItems = useMemo(() => {
-    const order = new Map(EXPRESSION_ITEMS.map((item, index) => [item.key, index]));
-    return [...shopItems]
-      .filter((item) => item.category === 'expression')
-      .sort((a, b) => (order.get(a.emoji as never) ?? 99) - (order.get(b.emoji as never) ?? 99));
-  }, [shopItems]);
+  useEffect(() => {
+    loadShopItems(activeTab);
+  }, [activeTab, loadShopItems]);
+
+  const filteredItems = useMemo(
+    () => shopItems.filter((item) => item.category === activeTab),
+    [shopItems, activeTab]
+  );
 
   const inventoryByItemId = useMemo(() => {
     const map = new Map<string, UserItem>();
-    inventory.forEach((item) => map.set(item.itemId, item));
+    inventory.forEach((inv) => map.set(inv.itemId, inv));
     return map;
   }, [inventory]);
 
-  const selectedItem = useMemo(
-    () => sortedItems.find((item) => item.id === selectedItemId) ?? sortedItems[0],
-    [selectedItemId, sortedItems]
+  const currentExpression = previewExpr ?? user?.equippedExpressionId ?? null;
+
+  const handleItemPress = useCallback(
+    async (item: AntItem) => {
+      if (!user || pendingItemId) return;
+
+      if (activeTab === 'expression') {
+        setPreviewExpr(item.emoji);
+      }
+
+      const ownedItem = inventoryByItemId.get(item.id);
+      const isEquipped =
+        activeTab === 'expression'
+          ? user.equippedExpressionId === item.emoji
+          : user.equippedOutfitId === item.id;
+
+      if (isEquipped) return;
+
+      try {
+        setPendingItemId(item.id);
+
+        if (ownedItem) {
+          const patch = await equipItem(ownedItem.id);
+          patchUser(patch);
+          return;
+        }
+
+        if (antBeans < item.price) {
+          Alert.alert('개미콩이 부족해요', `이 아이템은 ${item.price}개미콩이에요.`);
+          return;
+        }
+
+        const resultBalance = await purchaseItem(item.id);
+        setAntBeans(resultBalance);
+
+        const purchased = useShopStore.getState().inventory.find((ui) => ui.itemId === item.id);
+        if (purchased) {
+          const patch = await equipItem(purchased.id);
+          patchUser(patch);
+        }
+      } catch {
+        Alert.alert('상점 오류', '잠시 후 다시 시도해주세요.');
+      } finally {
+        setPendingItemId(null);
+      }
+    },
+    [user, pendingItemId, activeTab, inventoryByItemId, antBeans, equipItem, patchUser, purchaseItem, setAntBeans]
   );
-  const previewExpression = selectedItem?.emoji ?? user?.equippedExpressionId ?? null;
 
-  async function handleItemPress(item: AntItem) {
-    setSelectedItemId(item.id);
-  }
+  const renderItem = useCallback(
+    ({ item }: { item: AntItem }) => {
+      const isEquipped =
+        activeTab === 'expression'
+          ? user?.equippedExpressionId === item.emoji
+          : user?.equippedOutfitId === item.id;
+      const isPending = pendingItemId === item.id;
+      const isPreview = activeTab === 'expression' && previewExpr === item.emoji;
+      const exprImg = getExpressionImage(item.emoji);
 
-  async function handlePrimaryAction(item: AntItem) {
-    if (!user || pendingItemId) return;
+      return (
+        <TouchableOpacity
+          style={[
+            styles.itemCard,
+            isEquipped && styles.equippedCard,
+            !isEquipped && isPreview && styles.previewCard,
+          ]}
+          activeOpacity={0.8}
+          onPress={() => handleItemPress(item)}
+          disabled={isPending}
+        >
+          <View style={styles.itemImgWrap}>
+            {exprImg ? (
+              <Image source={exprImg} style={styles.itemImg} resizeMode="contain" />
+            ) : (
+              <Text style={styles.itemEmoji}>{item.emoji}</Text>
+            )}
+            {isEquipped && (
+              <View style={styles.checkCircle}>
+                <Text style={styles.checkMark}>✓</Text>
+              </View>
+            )}
+          </View>
 
-    const ownedItem = inventoryByItemId.get(item.id);
-    const isEquipped = user.equippedExpressionId === item.emoji;
+          <Text style={styles.itemName} numberOfLines={1}>
+            {item.name}
+          </Text>
 
-    if (isEquipped) return;
-
-    try {
-      setPendingItemId(item.id);
-
-      if (ownedItem) {
-        const patch = await equipItem(ownedItem.id);
-        patchUser(patch);
-        return;
-      }
-
-      if (antBeans < FACE_PRICE) {
-        Alert.alert('개미콩이 부족해요', '얼굴 표정은 하나당 10개미콩이에요.');
-        return;
-      }
-
-      const resultBalance = await purchaseItem(item.id);
-      setAntBeans(resultBalance);
-
-      const purchased = useShopStore.getState().inventory.find((userItem) => userItem.itemId === item.id);
-      if (purchased) {
-        const patch = await equipItem(purchased.id);
-        patchUser(patch);
-      }
-    } catch {
-      Alert.alert('상점 오류', '잠시 후 다시 시도해주세요.');
-    } finally {
-      setPendingItemId(null);
-    }
-  }
+          {isPending ? (
+            <ActivityIndicator size="small" color={COLORS.clay} style={styles.itemStatus} />
+          ) : isEquipped ? (
+            <View style={styles.equippedBadge}>
+              <Text style={styles.equippedText}>장착중</Text>
+            </View>
+          ) : (
+            <View style={styles.priceRow}>
+              <Image
+                source={require('../../../assets/icons/antbean.png')}
+                style={styles.beanSmall}
+              />
+              <Text style={styles.priceText}>{item.price}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      );
+    },
+    [activeTab, handleItemPress, pendingItemId, previewExpr, user]
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.breadcrumb}>상점 &gt; 얼굴</Text>
-          <Text style={styles.title}>개미 표정</Text>
+      {/* Cave background */}
+      <Image
+        source={require('../../../assets/backgrounds/shop-background.png')}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+
+      <View style={styles.layout}>
+        {/* Left: character preview */}
+        <View style={styles.leftPanel}>
+          <View style={styles.charWrap}>
+            <ClayAntCharacter
+              size="large"
+              rankScore={user?.rankScore ?? 0}
+              equippedExpression={currentExpression}
+              animated
+            />
+          </View>
+          <View style={styles.beanBadge}>
+            <Image
+              source={require('../../../assets/icons/antbean.png')}
+              style={styles.beanIcon}
+            />
+            <Text style={styles.beanCount}>{antBeans.toLocaleString()}</Text>
+          </View>
         </View>
-        <View style={styles.beanBadge}>
-          <Text style={styles.beanLabel}>개미콩</Text>
-          <Text style={styles.beanValue}>{antBeans.toLocaleString()}</Text>
+
+        {/* Right: shop panel */}
+        <View style={styles.rightPanel}>
+          {/* Tabs */}
+          <View style={styles.tabRow}>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'expression' && styles.tabBtnActive]}
+              onPress={() => {
+                setActiveTab('expression');
+                setPreviewExpr(null);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.tabIcon}>😊</Text>
+              <Text style={[styles.tabLabel, activeTab === 'expression' && styles.tabLabelActive]}>
+                얼굴
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'outfit' && styles.tabBtnActive]}
+              onPress={() => setActiveTab('outfit')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.tabIcon}>👕</Text>
+              <Text style={[styles.tabLabel, activeTab === 'outfit' && styles.tabLabelActive]}>
+                옷
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Item grid */}
+          {isLoading && filteredItems.length === 0 ? (
+            <View style={styles.loadingWrap}>
+              <ActivityIndicator color={COLORS.clay} size="large" />
+            </View>
+          ) : filteredItems.length === 0 ? (
+            <View style={styles.loadingWrap}>
+              <Text style={styles.emptyText}>아이템이 없어요</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredItems}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              numColumns={3}
+              columnWrapperStyle={styles.row}
+              contentContainerStyle={styles.gridContent}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
         </View>
       </View>
-
-      <View style={styles.previewSection}>
-        <ClayAntCharacter
-          size="large"
-          rankScore={user?.rankScore ?? 0}
-          equippedExpression={previewExpression}
-        />
-        <Text style={styles.previewName}>{selectedItem?.name ?? '표정을 고르세요'}</Text>
-        <Text style={styles.previewDescription}>
-          {selectedItem?.description ?? '얼굴 표정을 구매하고 장착할 수 있어요.'}
-        </Text>
-      </View>
-
-      <View style={styles.categoryTabs}>
-        <View style={styles.activeTab}>
-          <Text style={styles.activeTabText}>얼굴</Text>
-        </View>
-      </View>
-
-      {isLoading && sortedItems.length === 0 ? (
-        <View style={styles.loadingArea}>
-          <ActivityIndicator color={COLORS.clay} />
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.itemList}
-          showsVerticalScrollIndicator={false}
-        >
-          {sortedItems.map((item) => {
-            const ownedItem = inventoryByItemId.get(item.id);
-            const isOwned = Boolean(ownedItem);
-            const isEquipped = user?.equippedExpressionId === item.emoji;
-            const isPending = pendingItemId === item.id;
-            const expressionImage = getExpressionImage(item);
-
-            return (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.88}
-                style={[
-                  styles.itemCard,
-                  selectedItem?.id === item.id && styles.selectedCard,
-                ]}
-                onPress={() => handleItemPress(item)}
-              >
-                <View style={styles.itemPreview}>
-                  {expressionImage ? (
-                    <Image source={expressionImage} style={styles.expressionThumb} resizeMode="contain" />
-                  ) : (
-                    <ClayAntCharacter size="small" equippedExpression={item.emoji} />
-                  )}
-                </View>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemDescription} numberOfLines={1}>
-                    {item.description}
-                  </Text>
-                  <Text style={styles.priceText}>🫘 {FACE_PRICE}</Text>
-                </View>
-                <PastelButton
-                  title={isPending ? '처리중' : isEquipped ? '장착중' : isOwned ? '장착' : '구매'}
-                  variant={isEquipped ? 'ghost' : 'clay'}
-                  onPress={() => handlePrimaryAction(item)}
-                  disabled={isPending || isEquipped}
-                  style={styles.actionButton}
-                />
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background,
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 56,
   },
-  header: {
-    alignItems: 'center',
+  layout: {
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    paddingTop: 52,
+    paddingBottom: 80,
   },
-  breadcrumb: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+
+  // ── Left panel ──
+  leftPanel: {
+    flex: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 12,
   },
-  title: {
-    color: COLORS.textPrimary,
-    fontSize: 24,
-    fontWeight: '800',
-    marginTop: 2,
+  charWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   beanBadge: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surfaceSoft,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  beanLabel: {
-    color: COLORS.textSecondary,
-    fontSize: 10,
-  },
-  beanValue: {
-    color: COLORS.clay,
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 1,
-  },
-  previewSection: {
-    alignItems: 'center',
-    paddingBottom: 12,
-    paddingTop: 10,
-  },
-  previewName: {
-    color: COLORS.textPrimary,
-    fontSize: 17,
-    fontWeight: '800',
-    marginTop: 4,
-  },
-  previewDescription: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    marginTop: 3,
-  },
-  categoryTabs: {
     flexDirection: 'row',
-    marginBottom: 12,
-  },
-  activeTab: {
-    backgroundColor: COLORS.clay,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-  },
-  activeTabText: {
-    color: COLORS.surface,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  loadingArea: {
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: 'rgba(248, 240, 224, 0.9)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
   },
-  itemList: {
-    paddingBottom: 28,
+  beanIcon: {
+    width: 22,
+    height: 22,
   },
-  itemCard: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.borderSoft,
-    borderRadius: 18,
-    borderWidth: 1,
-    flexDirection: 'row',
-    marginBottom: 10,
-    padding: 12,
-  },
-  selectedCard: {
-    borderColor: COLORS.clay,
-    shadowColor: '#3F3A36',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  itemPreview: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surfaceSoft,
-    borderRadius: 14,
-    height: 64,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 64,
-  },
-  expressionThumb: {
-    height: 54,
-    width: 54,
-  },
-  itemInfo: {
-    flex: 1,
-    marginHorizontal: 12,
-  },
-  itemName: {
-    color: COLORS.textPrimary,
+  beanCount: {
     fontSize: 15,
     fontWeight: '800',
+    color: COLORS.textPrimary,
   },
-  itemDescription: {
+
+  // ── Right panel ──
+  rightPanel: {
+    flex: 6,
+    backgroundColor: 'rgba(251, 247, 242, 0.97)',
+    borderRadius: 20,
+    marginTop: 8,
+    marginBottom: 8,
+    marginRight: 8,
+    overflow: 'hidden',
+  },
+
+  // ── Tabs ──
+  tabRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingTop: 12,
+    paddingBottom: 8,
+    gap: 6,
+  },
+  tabBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    gap: 4,
+  },
+  tabBtnActive: {
+    backgroundColor: COLORS.clay,
+  },
+  tabIcon: {
+    fontSize: 13,
+  },
+  tabLabel: {
+    fontSize: 13,
+    fontWeight: '700',
     color: COLORS.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
+  },
+  tabLabelActive: {
+    color: '#fff',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.borderSoft,
+    marginHorizontal: 10,
+    marginBottom: 8,
+  },
+
+  // ── Grid ──
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  gridContent: {
+    paddingHorizontal: 8,
+    paddingBottom: 12,
+  },
+  row: {
+    gap: 4,
+    marginBottom: 4,
+  },
+
+  // ── Item card ──
+  itemCard: {
+    width: ITEM_W,
+    backgroundColor: COLORS.surfaceSoft,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    padding: 6,
+    paddingBottom: 8,
+  },
+  equippedCard: {
+    borderColor: COLORS.clay,
+    backgroundColor: '#FFF8F2',
+  },
+  previewCard: {
+    borderColor: COLORS.stone,
+  },
+  itemImgWrap: {
+    width: ITEM_W - 16,
+    height: ITEM_W - 16,
+    borderRadius: 10,
+    backgroundColor: '#EDE7DF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  itemImg: {
+    width: '88%',
+    height: '88%',
+  },
+  itemEmoji: {
+    fontSize: 28,
+  },
+  checkCircle: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.clay,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkMark: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  itemName: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  itemStatus: {
+    marginTop: 4,
+  },
+  equippedBadge: {
+    marginTop: 4,
+    backgroundColor: COLORS.clay,
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  equippedText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 4,
+  },
+  beanSmall: {
+    width: 11,
+    height: 11,
   },
   priceText: {
-    color: COLORS.clay,
-    fontSize: 12,
-    fontWeight: '800',
-    marginTop: 5,
-  },
-  actionButton: {
-    minWidth: 82,
-    paddingHorizontal: 0,
-    paddingVertical: 9,
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
   },
 });
