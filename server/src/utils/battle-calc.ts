@@ -1,6 +1,6 @@
-const MIN_SCALE = 0.75;
-const MAX_SCALE = 1.4;
-const SCALE_FACTOR = 0.02; // 수익률 차이 1%p당 0.02 변화
+import { SCALE_CONFIG } from '../constants/game-config';
+
+const { MIN_SCALE, MAX_SCALE, SCALE_FACTOR } = SCALE_CONFIG;
 
 export function calculateReturnRate(startPrice: number, currentPrice: number): number {
   if (startPrice === 0) return 0;
