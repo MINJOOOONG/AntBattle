@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
+import { globalLimiter } from './middleware/rateLimiter';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(cors({
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json());
 app.use(morgan('dev'));
+app.use(globalLimiter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
