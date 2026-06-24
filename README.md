@@ -30,13 +30,17 @@
 | ORM | Prisma |
 | Auth | bcrypt, JWT |
 | Validation | zod |
-| Mobile | React Native (Expo 56), TypeScript |
+| Rate Limiting | express-rate-limit |
+| Testing | Vitest |
+| Mobile | React Native (Expo), TypeScript |
 | State | Zustand |
 | Navigation | React Navigation (native stack, bottom tabs) |
 | HTTP Client | Axios |
 | Chart | react-native-svg |
 | Animation | React Native Animated API |
-| Infra | Docker Compose |
+| Server Hosting | Render |
+| Web Hosting | Vercel (Expo web export) |
+| Infra | Docker Compose (로컬 개발) |
 
 ## 폴더 구조
 
@@ -55,6 +59,7 @@ AntBattle/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── tsconfig.json
+│   ├── vitest.config.ts
 │   ├── prisma/
 │   │   ├── schema.prisma          # 10 models
 │   │   ├── seed.ts                # mock stocks, shop items, test users
@@ -62,45 +67,63 @@ AntBattle/
 │   └── src/
 │       ├── index.ts, app.ts
 │       ├── config/env.ts          # zod 환경변수 검증
-│       ├── middleware/            # auth, errorHandler, validate
+│       ├── constants/game-config.ts  # 배틀/스케일 상수
+│       ├── middleware/            # auth, errorHandler, validate, rateLimiter
 │       ├── routes/                # auth, friend, stock, user, battle, shop, ranking
 │       ├── controllers/           # 각 도메인 HTTP 핸들러
 │       ├── services/              # 비즈니스 로직
 │       │   ├── auth.service.ts
 │       │   ├── ant-bean.service.ts
+│       │   ├── user.service.ts
 │       │   ├── friend.service.ts
 │       │   ├── battle.service.ts
 │       │   ├── reward.service.ts
 │       │   ├── inventory.service.ts
 │       │   ├── ranking.service.ts
-│       │   └── market-data/       # IMarketDataService + Mock 구현체
-│       ├── utils/                 # jwt, rank, battle-calc, errors
+│       │   ├── market-data/       # IMarketDataService + Mock 구현체
+│       │   └── __tests__/         # reward.service.test.ts
+│       ├── utils/                 # jwt, rank, battle-calc, errors, user-select
+│       │   └── __tests__/         # battle-calc.test.ts, rank.test.ts
 │       └── types/
 │
 └── mobile/
     ├── app.json
     ├── package.json
     ├── tsconfig.json
+    ├── vercel.json
     ├── App.tsx
     └── src/
         ├── components/
-        │   ├── common/            # Button, EmptyState, LoadingView, ErrorView, SafetyDisclaimer
-        │   ├── ant/               # AntCharacter (스케일 애니메이션)
-        │   └── chart/             # MiniBarChart (react-native-svg)
+        │   ├── common/            # Button, EmptyState, LoadingView, ErrorView, SafetyDisclaimer, SoftCard, PastelButton 등
+        │   ├── ant/               # AntCharacter (스케일 애니메이션), ClayAntCharacter
+        │   ├── chart/             # MiniBarChart (react-native-svg)
+        │   └── icons/             # HomeIcon, BattleIcon, ShopIcon, MyPageIcon
         ├── screens/
         │   ├── auth/              # Splash, Login, Signup
         │   ├── home/              # Home
+        │   ├── battle/            # BattleList, BattleRequest, PeriodNegotiation, StockSelect, BattleProgress, BattleResult
+        │   ├── shop/              # Shop
         │   ├── social/            # FriendSearch, FriendList
         │   └── profile/           # MyPage
         ├── navigation/            # RootNavigator, MainTabNavigator, types
         ├── services/              # API 호출 래퍼 (auth, user, friend, stock, battle, shop, ranking)
         ├── store/                 # Zustand (auth, friend, battle, shop, ranking)
+        ├── hooks/                 # useBGM
         ├── types/                 # models.ts, enums.ts, api.ts
-        ├── constants/             # colors.ts, ranks.ts, rewards.ts
+        ├── constants/             # colors.ts, ranks.ts, rewards.ts, expressionAssets.ts, fonts.ts
         └── utils/
 ```
 
+## 배포 현황
+
+| 영역 | 호스팅 | URL |
+|------|--------|-----|
+| API 서버 | Render | https://antbattle.onrender.com/api |
+| 웹 앱 | Vercel | Expo web export (자동 배포) |
+
 ## 실행 방법
+
+### 로컬 개발
 
 ```bash
 # 1. PostgreSQL 시작
@@ -114,10 +137,15 @@ npx prisma generate
 npm run db:seed              # mock 데이터 삽입 (최초 1회)
 npm run dev                  # http://localhost:3000
 
-# 3. 맥북 브라우저에서 앱 실행
+# 3. 모바일 앱 실행
 cd mobile
 npm install
-npm start                 # http://localhost:8081
+npm start                    # http://localhost:8081
+
+# 4. 테스트 실행
+cd server
+npm test                     # vitest run
+npm run test:watch           # vitest (watch mode)
 ```
 
 ### 테스트 계정
@@ -139,6 +167,8 @@ npm start                 # http://localhost:8081
 | Shop | `GET /api/shop/items`, `POST /api/shop/purchase`, `POST /api/shop/inventory/equip` |
 | Rankings | `GET /api/rankings/global`, `GET /api/rankings/friends`, `GET /api/rankings/stats/me` |
 
+Rate Limiting 적용: 글로벌 200회/15분, 인증 엔드포인트 10회/15분
+
 ## MVP 범위
 
 ### 포함
@@ -154,6 +184,9 @@ npm start                 # http://localhost:8081
 - 전체/친구 랭킹 + 전적 통계
 - 마이페이지 (전적 차트, 프로필)
 - UX 폴리시 (빈/로딩/에러 상태, 안전 문구, 애니메이션)
+- 서버 유닛 테스트 (Vitest)
+- API Rate Limiting
+- 접근성 레이블 (주요 화면)
 
 ### 제외
 
@@ -162,6 +195,16 @@ npm start                 # http://localhost:8081
 - 실제 돈 베팅 / 현금성 보상
 - 종목 추천 / AI 매매 추천
 - API key/secret 프론트엔드 저장
+
+## 코드 품질
+
+- **테스트**: Vitest 기반 유닛 테스트 (battle-calc, rank, reward 서비스)
+- **타입 안전**: `any` 타입 전면 제거, Prisma 타입 + unknown 타입 가드 사용
+- **에러 처리**: Zustand 스토어에 `error` 상태 추가, 빈 catch 블록 제거
+- **상수 관리**: 매직 넘버 상수화 (`game-config.ts`)
+- **코드 구조**: 컨트롤러-서비스 분리, SAFE_USER_SELECT 공통화
+- **보안**: Rate Limiting, 트랜잭션 원자성 보장, DB 인덱스 최적화
+- **접근성**: 주요 화면 accessibilityLabel/accessibilityRole 적용
 
 ## 향후 확장 계획
 
