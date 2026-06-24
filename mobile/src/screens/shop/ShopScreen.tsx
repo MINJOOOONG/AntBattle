@@ -169,6 +169,8 @@ export default function ShopScreen({ navigation }: ShopScreenProps) {
           activeOpacity={0.8}
           onPress={() => handleItemPress(item)}
           disabled={isPending}
+          accessibilityLabel={`${item.name} ${isEquipped ? '장착중' : `${item.price} 개미콩`}`}
+          accessibilityRole="button"
         >
           <View style={[styles.itemImgWrap, isCompact && styles.itemImgWrapCompact]}>
             {exprImg ? (
@@ -237,6 +239,8 @@ export default function ShopScreen({ navigation }: ShopScreenProps) {
           style={[styles.iconButton, isCompact && styles.iconButtonCompact]}
           onPress={() => navigation.goBack()}
           activeOpacity={0.75}
+          accessibilityLabel="뒤로 가기"
+          accessibilityRole="button"
         >
           <Text style={[styles.topIcon, isCompact && styles.topIconCompact]}>‹</Text>
         </TouchableOpacity>
@@ -298,6 +302,9 @@ export default function ShopScreen({ navigation }: ShopScreenProps) {
                 setActiveTab(tab.key);
               }}
               activeOpacity={0.8}
+              accessibilityLabel={`${tab.label} 탭`}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === tab.key }}
             >
               <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
                 {tab.label}
