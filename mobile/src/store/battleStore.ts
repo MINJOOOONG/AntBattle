@@ -3,10 +3,20 @@ import { Battle } from '../types/models';
 import { BattlePeriod } from '../types/enums';
 import { battleService } from '../services/battle.service';
 
+function extractErrorMessage(e: unknown): string {
+  if (e && typeof e === 'object' && 'response' in e) {
+    const res = (e as { response?: { data?: { error?: { message?: string } } } }).response;
+    if (res?.data?.error?.message) return res.data.error.message;
+  }
+  if (e instanceof Error) return e.message;
+  return '오류가 발생했습니다.';
+}
+
 interface BattleState {
   battles: Battle[];
   currentBattle: Battle | null;
   isLoading: boolean;
+  error: string | null;
 
   loadBattles: (status?: string) => Promise<void>;
   loadBattleDetail: (battleId: string) => Promise<void>;
@@ -21,24 +31,25 @@ export const useBattleStore = create<BattleState>((set) => ({
   battles: [],
   currentBattle: null,
   isLoading: false,
+  error: null,
 
   loadBattles: async (status?: string) => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const battles = await battleService.getMyBattles(status);
       set({ battles, isLoading: false });
-    } catch {
-      set({ isLoading: false });
+    } catch (e) {
+      set({ isLoading: false, error: extractErrorMessage(e) });
     }
   },
 
   loadBattleDetail: async (battleId: string) => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const battle = await battleService.getBattleDetail(battleId);
       set({ currentBattle: battle, isLoading: false });
-    } catch {
-      set({ isLoading: false });
+    } catch (e) {
+      set({ isLoading: false, error: extractErrorMessage(e) });
     }
   },
 
