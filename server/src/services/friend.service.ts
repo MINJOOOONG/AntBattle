@@ -1,37 +1,16 @@
 import { PrismaClient, Friendship, User } from '@prisma/client';
 import { AppError, ConflictError, NotFoundError, ForbiddenError } from '../utils/errors';
+import { FULL_USER_SELECT } from '../utils/user-select';
 
 const prisma = new PrismaClient();
 
 type SafeUser = Omit<User, 'passwordHash'>;
 
-const SAFE_USER_SELECT = {
-  id: true,
-  email: true,
-  nickname: true,
-  handle: true,
-  rankScore: true,
-  winCount: true,
-  loseCount: true,
-  drawCount: true,
-  currentWinStreak: true,
-  bestWinStreak: true,
-  battleTickets: true,
-  equippedHatId: true,
-  equippedGlassesId: true,
-  equippedExpressionId: true,
-  equippedOutfitId: true,
-  equippedBackgroundId: true,
-  equippedTitleId: true,
-  createdAt: true,
-  updatedAt: true,
-} as const;
-
 export class FriendService {
   async searchUser(handle: string): Promise<SafeUser | null> {
     const user = await prisma.user.findUnique({
       where: { handle },
-      select: SAFE_USER_SELECT,
+      select: FULL_USER_SELECT,
     });
     return user;
   }
@@ -117,8 +96,8 @@ export class FriendService {
         ],
       },
       include: {
-        requester: { select: SAFE_USER_SELECT },
-        receiver: { select: SAFE_USER_SELECT },
+        requester: { select: FULL_USER_SELECT },
+        receiver: { select: FULL_USER_SELECT },
       },
     });
 
@@ -133,13 +112,13 @@ export class FriendService {
   }> {
     const incoming = await prisma.friendship.findMany({
       where: { receiverId: userId, status: 'pending' },
-      include: { requester: { select: SAFE_USER_SELECT } },
+      include: { requester: { select: FULL_USER_SELECT } },
       orderBy: { createdAt: 'desc' },
     });
 
     const outgoing = await prisma.friendship.findMany({
       where: { requesterId: userId, status: 'pending' },
-      include: { receiver: { select: SAFE_USER_SELECT } },
+      include: { receiver: { select: FULL_USER_SELECT } },
       orderBy: { createdAt: 'desc' },
     });
 
