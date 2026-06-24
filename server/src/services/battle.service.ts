@@ -5,9 +5,10 @@ import { getMarketDataService } from './market-data';
 import { calculateReturnRate, calculateAntScale, periodToMs } from '../utils/battle-calc';
 import { AppError, NotFoundError, ForbiddenError } from '../utils/errors';
 import { BattleStatus, BattlePeriod } from '../types';
+import { BATTLE_CONFIG } from '../constants/game-config';
 
 const prisma = new PrismaClient();
-const ENTRY_FEE = 50; // 배틀 참가비 (양쪽 모두)
+const { ENTRY_FEE } = BATTLE_CONFIG;
 
 const SAFE_USER_SELECT = {
   id: true,
