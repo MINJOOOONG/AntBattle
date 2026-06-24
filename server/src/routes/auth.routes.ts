@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authController } from '../controllers/auth.controller';
 import { authMiddleware } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { authLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -26,12 +27,12 @@ const loginSchema = z.object({
 });
 
 // POST /api/auth/signup
-router.post('/signup', validate(signupSchema), (req, res, next) => {
+router.post('/signup', authLimiter, validate(signupSchema), (req, res, next) => {
   authController.signup(req, res, next);
 });
 
 // POST /api/auth/login
-router.post('/login', validate(loginSchema), (req, res, next) => {
+router.post('/login', authLimiter, validate(loginSchema), (req, res, next) => {
   authController.login(req, res, next);
 });
 
