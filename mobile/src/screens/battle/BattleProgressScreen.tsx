@@ -78,7 +78,7 @@ export default function BattleProgressScreen({ route, navigation }: RootScreenPr
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.clay} />}
     >
       {/* 타이머 */}
-      <SoftCard style={styles.timerCard}>
+      <SoftCard style={styles.timerCard} accessibilityLabel={`남은 시간 ${remaining || '계산 중'}`}>
         <Text style={styles.timerLabel}>남은 시간</Text>
         <Text style={styles.timerValue}>{remaining || '계산 중...'}</Text>
         {period && <Text style={styles.periodText}>{BATTLE_PERIOD_LABELS[period]}</Text>}
@@ -89,7 +89,7 @@ export default function BattleProgressScreen({ route, navigation }: RootScreenPr
 
       {/* 개미 VS 개미 */}
       <View style={styles.vsSection}>
-        <View style={styles.antSide}>
+        <View style={styles.antSide} accessibilityLabel={`내 개미 ${user.nickname}, 수익률 ${myRate >= 0 ? '+' : ''}${myRate.toFixed(2)}%`}>
           <AntCharacter
             scale={myP?.antScale ?? 1}
             rankScore={user.rankScore}
@@ -101,8 +101,8 @@ export default function BattleProgressScreen({ route, navigation }: RootScreenPr
           <Text style={styles.antName}>{user.nickname}</Text>
           <Text style={styles.myLabel}>나</Text>
         </View>
-        <View style={styles.vsCircle}><Text style={styles.vsText}>VS</Text></View>
-        <View style={styles.antSide}>
+        <View style={styles.vsCircle} accessibilityLabel="대"><Text style={styles.vsText}>VS</Text></View>
+        <View style={styles.antSide} accessibilityLabel={`상대 개미 ${opponent?.nickname || '상대'}, 수익률 ${opRate >= 0 ? '+' : ''}${opRate.toFixed(2)}%`}>
           <AntCharacter
             scale={opP?.antScale ?? 1}
             rankScore={opponent?.rankScore ?? 0}
