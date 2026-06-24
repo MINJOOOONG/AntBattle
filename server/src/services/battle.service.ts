@@ -1,4 +1,4 @@
-import { PrismaClient, Battle, BattleParticipant } from '@prisma/client';
+import { Prisma, PrismaClient, Battle, BattleParticipant } from '@prisma/client';
 import { antBeanService } from './ant-bean.service';
 import { rewardService } from './reward.service';
 import { getMarketDataService } from './market-data';
@@ -296,7 +296,7 @@ export class BattleService {
    * 내 배틀 목록.
    */
   async getMyBattles(userId: string, status?: string): Promise<BattleWithRelations[]> {
-    const where: any = {
+    const where: Prisma.BattleWhereInput = {
       OR: [{ requesterId: userId }, { opponentId: userId }],
     };
     if (status) {
