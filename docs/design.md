@@ -25,6 +25,7 @@
 3. **명확한 액션**: 주요 버튼은 50px 높이와 충분한 터치 영역을 유지한다.
 4. **모바일 우선**: 작은 화면에서 한 손 조작, 읽기 쉬운 여백, 짧은 문구를 우선한다.
 5. **안전한 카피**: 수익률은 게임 결과 지표로만 표현하고 매수/매도 유도 문구를 쓰지 않는다.
+6. **접근성**: 주요 인터랙티브 요소에 accessibilityLabel과 accessibilityRole을 제공한다.
 
 ## 컬러 팔레트
 
@@ -107,7 +108,7 @@ React Native 기본 폰트를 사용한다.
 
 ## 개미 캐릭터
 
-`mobile/src/components/ant/AntCharacter.tsx`
+### AntCharacter (`mobile/src/components/ant/AntCharacter.tsx`)
 
 View 기반 클레이 개미 캐릭터:
 
@@ -122,7 +123,14 @@ View 기반 클레이 개미 캐릭터:
 - scale prop으로 배틀 우세/열세 표현 (Animated.timing 300ms easeInOut)
 - rankScore 기반 border color
 - 장착 아이템: hat/glasses/expression 이모지로 위치에 표시
-- 나중에 꾸미기 아이템 확장 가능한 구조
+
+### ClayAntCharacter (`mobile/src/components/ant/ClayAntCharacter.tsx`)
+
+홈/상점 화면용 클레이 스타일 개미 캐릭터:
+
+- 더 크고 상세한 렌더링
+- hero 사이즈 지원
+- 표정 에셋 이미지 장착 지원 (expressionAssets.ts)
 
 ## 공통 컴포넌트
 
@@ -182,6 +190,12 @@ View 기반 클레이 개미 캐릭터:
 
 컬러 팔레트 자동 반영.
 
+### 탭 아이콘
+
+`mobile/src/components/icons/` — HomeIcon, BattleIcon, ShopIcon, MyPageIcon
+
+SVG 기반 커스텀 탭 바 아이콘.
+
 ## 문구 톤
 
 앱 문구는 귀엽고 가벼운 톤. 딱딱한 금융 서비스 말투 금지.
@@ -230,10 +244,10 @@ View 기반 클레이 개미 캐릭터:
 
 ### HomeScreen
 
-1. 인사 영역 ("민두개미, 오늘도 장이 열렸어요")
-2. 메인 캐릭터 영역 (AntCharacter hero + CharacterBubble)
-3. 상태 카드 (SoftCard + StatPill: 개미콩, 랭크, 전적)
-4. CTA 버튼 (PastelButton)
+1. 배경 이미지 (`home-background-3.png`)
+2. 인사 영역 ("민두개미, 오늘도 장이 열렸어요")
+3. 사운드 토글 + 개미콩 배지 (접근성 레이블 적용)
+4. 메인 캐릭터 영역 (ClayAntCharacter hero + 말풍선 5초 자동 회전)
 5. SafetyDisclaimer
 
 ### BattleListScreen
@@ -251,13 +265,26 @@ View 기반 클레이 개미 캐릭터:
 
 ### BattleProgressScreen → "겨루는 중"
 
+- 타이머 카드 (남은 시간, 접근성 레이블)
+- 마이크로카피 말풍선
+- VS 영역: 내 개미 vs 상대 개미 (접근성 레이블로 수익률 제공)
+- 수익률 비교 카드
+
 ### BattleResultScreen → "승부 결과"
 
 ### ShopScreen → "상점"
 
 - 배경 이미지: `mobile/assets/backgrounds/shop-background.png`
 - 배경 이미지 원본 사이즈: 941 × 1672 px
-- `Image`는 전체 화면에 absolute fill로 깔고 `resizeMode="cover"`를 사용한다.
+- 왼쪽: 개미 캐릭터 (나무 무대 위)
+- 오른쪽: 상점 카드 패널 (탭: 옷/모자/액세서리)
+- 뒤로가기, 탭, 아이템 카드에 접근성 레이블 적용
+
+### MyPageScreen
+
+- 전적 통계 (MiniBarChart)
+- 프로필 정보
+- 최근 배틀 기록
 
 ## 애니메이션
 
