@@ -42,6 +42,8 @@
 - bcrypt
 - JWT
 - zod
+- express-rate-limit
+- Vitest (테스트)
 
 ### Mobile
 
@@ -57,17 +59,26 @@
 | 영역 | 상태 |
 |------|------|
 | Project scaffold | 완료 |
-| PostgreSQL + Prisma schema | 완료 |
+| PostgreSQL + Prisma schema (10 models) | 완료 |
 | Auth API (signup, login, me) | 완료 |
 | AntBean ledger (credit, debit, balance) | 완료 |
 | User/Friend/Stock API | 완료 |
 | Battle API (생성, 기간 협상, 종목 선택, tick, 보상) | 완료 |
 | Shop/Inventory API (구매, 장착, 해제) | 완료 |
-| Ranking API (전체, 친구, 전적 통계) | 완료 |
+| Ranking API (전체, 친구, 전적 통계, 페이지네이션) | 완료 |
 | Mobile auth/session screens | 완료 |
 | Mobile friend/profile screens | 완료 |
-| Mobile stores (auth, friend, battle, shop, ranking) | 완료 |
+| Mobile battle screens (6개) | 완료 |
+| Mobile shop screen | 완료 |
+| Mobile stores (auth, friend, battle, shop, ranking + 에러 상태) | 완료 |
 | UX 폴리시 (공통 컴포넌트, 차트, 애니메이션) | 완료 |
+| 서버 유닛 테스트 (Vitest) | 완료 |
+| Rate Limiting | 완료 |
+| any 타입 제거 | 완료 |
+| 트랜잭션 원자성 | 완료 |
+| DB 인덱스 최적화 | 완료 |
+| 접근성 레이블 | 완료 |
+| Render + Vercel 배포 | 완료 |
 
 ## 아키텍처 원칙
 
@@ -75,19 +86,24 @@
 
 - HTTP handler는 `controllers/`에 둔다.
 - 라우팅은 `routes/`에 둔다.
-- 비즈니스 로직은 `services/`에 둔다.
+- 비즈니스 로직은 `services/`에 둔다. 컨트롤러에서 Prisma를 직접 호출하지 않는다.
 - DB 접근은 Prisma를 사용한다.
 - request body 검증은 zod schema와 `validate` middleware를 사용한다.
 - 인증이 필요한 라우트는 `authMiddleware`를 사용한다.
 - API 응답에 `passwordHash`를 절대 포함하지 않는다.
+- User select 상수는 `utils/user-select.ts`의 공통 상수를 사용한다 (FULL/RANKING/EQUIPPED_USER_SELECT).
+- 게임 설정값은 `constants/game-config.ts`에서 import한다 (BATTLE_CONFIG, SCALE_CONFIG).
+- 에러 타입은 `utils/errors.ts`의 AppError/NotFoundError/ForbiddenError를 사용한다.
 
 ### 모바일
 
 - 화면은 `screens/`에 둔다.
 - API 호출 래퍼는 `services/`에 둔다.
 - 로그인 세션/공유 상태는 Zustand store에 둔다.
+- Zustand store는 `error: string | null` 상태를 포함하고, catch 블록에서 에러 메시지를 저장한다.
 - 타입은 `types/models.ts`, `types/api.ts`, `types/enums.ts`에 둔다.
 - 색상/랭크/보상 값은 `constants/`에 둔다.
+- 주요 인터랙티브 요소에 `accessibilityLabel`과 `accessibilityRole`을 추가한다.
 
 ### 데이터 흐름
 
@@ -113,6 +129,7 @@ Express Route -> Controller -> Service -> Prisma -> PostgreSQL
 - 승리 +100, 패배 +20, 무승부 +50, 연승 보너스 +30 기준을 유지한다.
 - 아이템 구매는 음수 transaction으로 기록한다.
 - 유저 간 송금과 패자 재화 약탈은 금지한다.
+- 참가비는 BATTLE_CONFIG.ENTRY_FEE (현재 50) 상수를 사용한다.
 
 ## 코딩 컨벤션
 
@@ -131,6 +148,11 @@ Express Route -> Controller -> Service -> Prisma -> PostgreSQL
 - 주석: 한국어 허용
 - 에러 메시지: 사용자에게 보이는 메시지는 한국어
 
+### 타입 안전
+
+- `any` 타입 사용 금지. Prisma 타입(`Prisma.XxxWhereInput` 등)이나 `unknown` + 타입 가드를 사용한다.
+- catch 블록은 `catch (e: unknown)`으로 작성하고 타입 가드로 메시지를 추출한다.
+
 ## 배틀 핵심 로직
 
 ### 수익률
@@ -141,20 +163,29 @@ returnRate = (currentPrice - startPrice) / startPrice * 100;
 
 ### 개미 크기
 
-```text
-base scale: 1.0
-leader scale: 1.05-1.4
-trailer scale: 0.75-0.95
+```typescript
+const scale = 1.0 + (myReturnRate - opponentReturnRate) * SCALE_CONFIG.SCALE_FACTOR;
+// SCALE_CONFIG.MIN_SCALE(0.75) ~ SCALE_CONFIG.MAX_SCALE(1.4) 범위 clamp
 ```
-
-수익률 차이 기반으로 계산하고 0.75-1.4 범위로 clamp한다.
 
 ### 상태 흐름
 
 ```
 pending_period -> pending_stock_selection -> active -> finished
               -> period_rejected -> pending_period
+              -> cancelled (참가비 환불)
 ```
+
+### PriceSnapshot 최적화
+
+- tick()에서 가격 변동 1% 이상이거나 배틀 종료 시에만 PriceSnapshot을 기록한다.
+
+## 테스트 운영
+
+- 테스트 프레임워크: Vitest
+- `npm test` — 전체 테스트 실행
+- `npm run test:watch` — watch mode
+- Prisma mock은 클래스 기반 패턴 사용 (`class MockPrismaClient {}`)
 
 ## Migration 운영 규칙
 
@@ -165,6 +196,14 @@ pending_period -> pending_stock_selection -> active -> finished
 3. `npx prisma generate`를 실행한다.
 4. 필요하면 `npm run db:seed`를 실행한다.
 
+## 배포 환경
+
+| 영역 | 호스팅 | 비고 |
+|------|--------|------|
+| API 서버 | Render | 무료 플랜, cold start 주의 |
+| 웹 앱 | Vercel | Expo web export, main 브랜치 푸쉬 시 자동 배포 |
+| DB | Render PostgreSQL | |
+
 ## 안전 문구
 
 앱 내 적절한 위치에 반드시 포함한다.
@@ -173,12 +212,12 @@ pending_period -> pending_stock_selection -> active -> finished
 
 ## 현재 Phase 상태
 
-모든 Phase(0~6) 구현 완료. MVP 기능 전체 동작.
+모든 Phase(0~7) 구현 완료. MVP 기능 전체 동작 + 코드 품질 개선 완료.
 
 ## 다음 우선순위
 
-1. 배틀 모바일 화면 구현 (BattleRequest, PeriodNegotiation, StockSelect, BattleProgress, BattleResult)
-2. 상점/꾸미기 모바일 화면 구현 (Shop, AntCustomize)
-3. 랭킹 모바일 화면 구현 (RankingScreen)
-4. 실제 시세 API 연동 (IMarketDataService 인터페이스 교체)
-5. 배포 준비 (AWS Free Tier)
+1. 실제 시세 API 연동 (IMarketDataService 인터페이스 교체)
+2. Pro 구독 (추가 배틀 티켓, 광고 제거, 프리미엄 통계)
+3. 시즌 시스템 (시즌패스, 한정 스킨/칭호)
+4. 소셜 확장 (프라이빗 리그, 결과 카드 공유)
+5. 인프라 확장 (Redis 캐시, 별도 worker, Load Balancer)
