@@ -9,22 +9,27 @@ AntBattle/
 ├── server/                 # Express API 서버
 │   ├── prisma/             # PostgreSQL schema, migrations, seed
 │   └── src/
-│       ├── controllers/    # HTTP handler
-│       ├── middleware/     # auth, validation, error handling
-│       ├── routes/         # /api 하위 라우트
-│       ├── services/       # 비즈니스 로직
-│       ├── utils/          # JWT, rank, battle calculation
-│       └── config/         # env validation
+│       ├── config/         # env validation (zod)
+│       ├── constants/      # game-config (배틀/스케일 상수)
+│       ├── controllers/    # HTTP handler (7개)
+│       ├── middleware/     # auth, validation, error handling, rate limiting
+│       ├── routes/         # /api 하위 라우트 (7개 도메인)
+│       ├── services/       # 비즈니스 로직 (8개 + market-data)
+│       │   └── __tests__/  # reward.service.test.ts
+│       ├── utils/          # JWT, rank, battle calculation, user-select
+│       │   └── __tests__/  # battle-calc.test.ts, rank.test.ts
+│       └── types/
 ├── mobile/                 # Expo React Native 앱
 │   └── src/
-│       ├── components/     # 공통 UI, AntCharacter, Chart
+│       ├── components/     # 공통 UI (11개), AntCharacter (2개), Chart, Icons (4개)
 │       ├── navigation/     # React Navigation
-│       ├── screens/        # auth, home, social, profile
-│       ├── services/       # API client wrapper
-│       ├── store/          # Zustand stores
+│       ├── screens/        # auth (3), home (1), battle (6), shop (1), social (2), profile (1)
+│       ├── services/       # API client wrapper (8개)
+│       ├── store/          # Zustand stores (5개, 에러 상태 포함)
+│       ├── hooks/          # useBGM
 │       ├── types/          # API/model/enums
-│       └── constants/      # color, rank, reward
-├── docker-compose.yml      # PostgreSQL
+│       └── constants/      # color, rank, reward, expression, font
+├── docker-compose.yml      # PostgreSQL (로컬 개발)
 └── docs/
 ```
 
@@ -32,10 +37,10 @@ AntBattle/
 
 ```
 Mobile Screen
-  -> Zustand Store
+  -> Zustand Store (error 상태 포함)
   -> mobile/src/services/*.service.ts
-  -> Axios API Client
-  -> Express Route
+  -> Axios API Client (timeout: 60s)
+  -> Express Route (rate-limit 적용)
   -> Controller
   -> Service
   -> Prisma
@@ -51,23 +56,27 @@ Mobile Screen
 - 배틀 상태 머신 (pending_period → active → finished)
 - 보상/랭크 점수 처리 (Serializable 트랜잭션)
 - 아이템 구매/장착/해제
+- Rate Limiting (글로벌 200/15분, 인증 10/15분)
+- 회원가입 트랜잭션 원자성 보장 ($transaction)
 
 ### 모바일 책임
 
 - Expo React Native 화면과 네비게이션
 - JWT 저장 및 API 요청
-- 인증/친구/배틀/상점/랭킹 상태 관리
-- 구현 화면: Splash, Login, Signup, Home, FriendSearch, FriendList, MyPage
-- 공통 컴포넌트: Button, EmptyState, LoadingView, ErrorView, SafetyDisclaimer, MiniBarChart
+- 인증/친구/배틀/상점/랭킹 상태 관리 (에러 상태 포함)
+- 구현 화면: Splash, Login, Signup, Home, BattleList, BattleRequest, PeriodNegotiation, StockSelect, BattleProgress, BattleResult, Shop, FriendSearch, FriendList, MyPage
+- 공통 컴포넌트: Button, PastelButton, SoftCard, EmptyState, LoadingView, ErrorView, SafetyDisclaimer, MiniBarChart, CharacterBubble, StatPill, StatusBadge, SectionHeader
 - AntCharacter 스케일 애니메이션 (300ms easeInOut)
+- ClayAntCharacter (홈/상점용 클레이 스타일)
+- 접근성 레이블 (주요 화면)
 
 ## 기술 스택
 
 | 영역 | 기술 |
 |------|------|
-| Mobile | Expo 56, React Native, TypeScript |
+| Mobile | Expo, React Native, TypeScript |
 | Navigation | React Navigation native stack, bottom tabs |
-| State | Zustand |
+| State | Zustand (에러 상태 패턴 적용) |
 | HTTP Client | Axios |
 | Chart | react-native-svg |
 | Animation | React Native Animated API |
@@ -76,18 +85,27 @@ Mobile Screen
 | ORM | Prisma |
 | Auth | bcrypt, JWT |
 | Validation | zod |
-| Infra | Docker Compose |
+| Rate Limiting | express-rate-limit |
+| Testing | Vitest |
+| Server Hosting | Render |
+| Web Hosting | Vercel |
+| Infra (로컬) | Docker Compose |
 
 ## API 구조
 
 모든 API는 `/api` 하위에 위치한다. 인증이 필요한 라우트는 `Authorization: Bearer <token>` 헤더를 사용한다.
 
+### Rate Limiting
+
+- 글로벌: 200회/15분 (모든 API)
+- 인증: 10회/15분 (`/api/auth/signup`, `/api/auth/login`)
+
 ### Auth
 
 | Method | Path | Auth | 설명 |
 |--------|------|------|------|
-| POST | `/api/auth/signup` | No | email, nickname, handle, password로 가입 |
-| POST | `/api/auth/login` | No | handle, password로 로그인 |
+| POST | `/api/auth/signup` | No | email, nickname, handle, password로 가입 (rate-limit 10/15분) |
+| POST | `/api/auth/login` | No | handle, password로 로그인 (rate-limit 10/15분) |
 | GET | `/api/auth/me` | Yes | 현재 로그인 유저 조회 |
 
 ### Users
@@ -123,7 +141,7 @@ Mobile Screen
 | Method | Path | Auth | 설명 |
 |--------|------|------|------|
 | POST | `/api/battles` | Yes | 배틀 생성 (참가비 50콩 차감, 기간 제안) |
-| GET | `/api/battles` | Yes | 내 배틀 목록 (?status 필터) |
+| GET | `/api/battles` | Yes | 내 배틀 목록 (?status, ?limit, ?offset) |
 | GET | `/api/battles/:id` | Yes | 배틀 상세 (참가자/종목/수익률) |
 | POST | `/api/battles/:id/period` | Yes | 기간 재제안 |
 | POST | `/api/battles/:id/period/respond` | Yes | 기간 수락/거절 |
@@ -145,7 +163,7 @@ Mobile Screen
 
 | Method | Path | Auth | 설명 |
 |--------|------|------|------|
-| GET | `/api/rankings/global` | Yes | 전체 랭킹 (?limit, 기본 50) + myRank |
+| GET | `/api/rankings/global` | Yes | 전체 랭킹 (?limit, ?offset, 기본 50) + myRank |
 | GET | `/api/rankings/friends` | Yes | 친구 랭킹 (나+친구) + myRank |
 | GET | `/api/rankings/stats/me` | Yes | 내 전적 통계 + 최근 5배틀 |
 | GET | `/api/rankings/stats/:id` | Yes | 유저 전적 통계 + 최근 5배틀 |
@@ -268,9 +286,14 @@ interface Stock {
 
 ### AuthService
 
-- 회원가입: email/handle unique 검증, bcrypt 해싱, 가입 보너스 ledger 기록
+- 회원가입: email/handle unique 검증, bcrypt 해싱, 가입 보너스 ledger 기록 (단일 $transaction)
 - 로그인: handle/password 검증, JWT 발급
 - me: passwordHash 제외 유저 정보와 개미콩 잔액 반환
+
+### UserService
+
+- `getMyProfile`: 내 프로필 조회 (FULL_USER_SELECT)
+- `getUserProfile`: 타 유저 프로필 조회
 
 ### AntBeanService
 
@@ -283,34 +306,39 @@ interface Stock {
 
 - handle 검색, 친구 요청 생성, 수락/거절, 목록 조회, 관계 삭제
 - 양방향 중복 검사
+- FULL_USER_SELECT 공통 상수 사용
 
 ### BattleService
 
-- 배틀 생성 (친구 확인, 중복 확인, 참가비 차감)
+- 배틀 생성 (친구 확인, 중복 확인, 참가비 차감 — BATTLE_CONFIG.ENTRY_FEE 상수)
 - 기간 협상 (제안/수락/거절)
 - 종목 선택 (양쪽 완료 시 active 전환, 시작가 기록)
 - 배틀 취소 (참가비 환불)
-- tick (가격 업데이트 + 만료 종료 + 보상 처리)
+- tick (가격 업데이트 + PriceSnapshot 1% 이상 변동 시에만 기록 + 만료 종료 + 보상 처리)
+- 페이지네이션 지원 (limit, offset)
 
 ### RewardService
 
 - processResult: 승/패/무 판정, 개미콩 보상, 랭크 점수 갱신
 - 승리: +100콩, +30점 / 패배: +20콩, -10점 / 무승부: +50콩, +5점
 - 3연승 이상: +30콩 보너스
+- 유닛 테스트 커버리지 (Vitest)
 
 ### InventoryService
 
-- 상점 아이템 조회 (카테고리 필터)
+- 상점 아이템 조회 (카테고리 필터, Prisma.AntItemWhereInput 타입)
 - 아이템 구매 (중복 방지, 레저 차감)
 - 인벤토리 조회, 장착/해제
 - 카테고리→User 필드 매핑 (hat→equippedHatId 등)
+- EQUIPPED_USER_SELECT 공통 상수 사용
 
 ### RankingService
 
-- 전체 랭킹 (rankScore desc, winCount desc)
+- 전체 랭킹 (rankScore desc, winCount desc, 페이지네이션)
 - 친구 랭킹 (나+친구)
 - 유저 전적 통계 (최근 5배틀 포함)
 - myRank 계산
+- RANKING_USER_SELECT 공통 상수 사용
 
 ### MarketDataService
 
@@ -328,14 +356,65 @@ interface IMarketDataService {
 
 실제 시세 연동이 필요해져도 모바일에서 API key를 들고 있으면 안 된다. 외부 시세 API는 서버 전용 adapter로 추가하고, 주문/자동매매 기능은 구현하지 않는다.
 
+## 공통 유틸
+
+### SAFE_USER_SELECT 공통화 (user-select.ts)
+
+API 응답에 포함할 User 필드를 용도별로 분리:
+
+| 상수 | 필드 수 | 용도 |
+|------|--------|------|
+| FULL_USER_SELECT | 20 | user.controller, friend.service |
+| RANKING_USER_SELECT | 15 | ranking.service |
+| EQUIPPED_USER_SELECT | 7 | inventory.service |
+
+### 게임 상수 (game-config.ts)
+
+```typescript
+BATTLE_CONFIG.ENTRY_FEE = 50;
+SCALE_CONFIG.MIN_SCALE = 0.75;
+SCALE_CONFIG.MAX_SCALE = 1.4;
+SCALE_CONFIG.SCALE_FACTOR = 0.02;
+```
+
+## 테스트
+
+### Vitest 설정
+
+- `server/vitest.config.ts` — tsconfig 경로 alias 지원
+- `npm test` — `vitest run`
+- `npm run test:watch` — `vitest` (watch mode)
+
+### 테스트 파일
+
+| 파일 | 테스트 수 | 대상 |
+|------|----------|------|
+| `utils/__tests__/battle-calc.test.ts` | 15 | calculateReturnRate, calculateAntScale, periodToMs |
+| `utils/__tests__/rank.test.ts` | 13 | getRankName, getAllRanks, REWARD 상수 |
+| `services/__tests__/reward.service.test.ts` | 7 | 보상 처리 로직 (Prisma mock) |
+
 ## 보안과 안전 경계
 
 - 비밀번호는 bcrypt로 해싱한다.
 - JWT payload에는 최소 식별자만 넣는다.
 - API 응답에 `passwordHash`를 포함하지 않는다.
 - zod로 request body를 검증한다.
+- Rate Limiting으로 API 남용을 방지한다.
+- 회원가입 시 유저 생성과 보너스 지급을 단일 트랜잭션으로 보장한다.
 - 실제 주식 주문, 계좌 연결, 자동매매, 금전 베팅, 현금성 보상은 구현하지 않는다.
 - 종목 조회는 게임/학습용 정보이며 투자 추천 문구를 사용하지 않는다.
+
+## DB 인덱스
+
+Prisma schema에 정의된 주요 인덱스:
+
+- `User`: email, handle, rankScore(desc)
+- `AntBeanTransaction`: userId+createdAt, userId+type, userId+referenceId+type
+- `Friendship`: requesterId+receiverId(unique), receiverId+status, status+requesterId
+- `Battle`: requesterId+status, opponentId+status, status+endAt
+- `BattleParticipant`: battleId+userId(unique), userId
+- `Stock`: name
+- `PriceSnapshot`: battleId+stockId+capturedAt
 
 ## 개발 명령
 
@@ -349,9 +428,11 @@ npm install
 npm run dev
 npm run build
 npm run typecheck
+npm test
+npm run test:watch
 npm run db:seed
 
-# 맥북 브라우저 앱
+# 모바일
 cd mobile
 npm install
 npm start
@@ -385,3 +466,4 @@ npm start
 | 4 | Shop, Inventory, 아이템 구매/장착 | 완료 |
 | 5 | Ranking, 전적 통계 | 완료 |
 | 6 | UX 폴리시 (빈/로딩/에러 상태, 안전 문구, 차트, 애니메이션) | 완료 |
+| 7 | 코드 품질 개선 (테스트, 타입 안전, 에러 처리, 상수화, Rate Limiting, 접근성) | 완료 |
