@@ -383,16 +383,21 @@ export class BattleService {
         });
       }
 
-      // PriceSnapshot 기록
+      // PriceSnapshot 기록 (가격 변동 1% 이상 또는 배틀 종료 시에만)
       for (const p of battle.participants) {
         const currentPrice = await marketData.getCurrentPrice(p.stockId);
-        await prisma.priceSnapshot.create({
-          data: {
-            battleId: battle.id,
-            stockId: p.stockId,
-            price: currentPrice,
-          },
-        });
+        const prevPrice = p.currentPrice ?? currentPrice;
+        const changeRate = prevPrice > 0 ? Math.abs(currentPrice - prevPrice) / prevPrice : 0;
+
+        if (changeRate >= 0.01 || isExpired) {
+          await prisma.priceSnapshot.create({
+            data: {
+              battleId: battle.id,
+              stockId: p.stockId,
+              price: currentPrice,
+            },
+          });
+        }
       }
 
       updated++;
