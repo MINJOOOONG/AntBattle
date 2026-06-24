@@ -115,14 +115,14 @@ export default function HomeScreen(_props: HomeScreenProps) {
           <Text style={styles.greetingSub}>{pickRandom(GREETINGS)}</Text>
         </View>
         <View style={styles.topBarRight}>
-          <Pressable onPress={toggleBGM} style={styles.soundBtn} hitSlop={8}>
+          <Pressable onPress={toggleBGM} style={styles.soundBtn} hitSlop={8} accessibilityLabel={isPlaying ? '배경음악 끄기' : '배경음악 켜기'} accessibilityRole="button">
             <IconImg
               source={require('../../../assets/icons/sound.png')}
               size={42}
               style={!isPlaying ? { opacity: 0.4 } : undefined}
             />
           </Pressable>
-          <View style={styles.beanBadge}>
+          <View style={styles.beanBadge} accessibilityLabel={`개미콩 ${antBeans.toLocaleString()}개`}>
             <IconImg
               source={require('../../../assets/icons/antbean.png')}
               size={42}
