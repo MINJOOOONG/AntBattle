@@ -73,6 +73,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
             autoCapitalize="none"
             autoCorrect={false}
             editable={!loading}
+            accessibilityLabel="핸들 입력"
           />
 
           <Text style={styles.label}>비밀번호</Text>
@@ -83,6 +84,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
             placeholder="비밀번호"
             secureTextEntry
             editable={!loading}
+            accessibilityLabel="비밀번호 입력"
           />
 
           <Button title="로그인" onPress={handleLogin} loading={loading} style={{ marginTop: 16 }} />
