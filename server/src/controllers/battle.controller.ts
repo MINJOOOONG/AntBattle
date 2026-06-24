@@ -24,8 +24,10 @@ export class BattleController {
     try {
       const userId = req.userId!;
       const status = req.query.status as string | undefined;
+      const limit = parseInt(String(req.query.limit ?? '20'), 10);
+      const offset = parseInt(String(req.query.offset ?? '0'), 10);
 
-      const battles = await battleService.getMyBattles(userId, status);
+      const battles = await battleService.getMyBattles(userId, status, limit, offset);
       res.json({ battles });
     } catch (err) {
       next(err);

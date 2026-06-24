@@ -295,7 +295,7 @@ export class BattleService {
   /**
    * 내 배틀 목록.
    */
-  async getMyBattles(userId: string, status?: string): Promise<BattleWithRelations[]> {
+  async getMyBattles(userId: string, status?: string, limit: number = 20, offset: number = 0): Promise<BattleWithRelations[]> {
     const where: Prisma.BattleWhereInput = {
       OR: [{ requesterId: userId }, { opponentId: userId }],
     };
@@ -307,6 +307,8 @@ export class BattleService {
       where,
       include: BATTLE_INCLUDE,
       orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
     });
 
     return battles as BattleWithRelations[];
