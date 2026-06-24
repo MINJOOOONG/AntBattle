@@ -15,7 +15,7 @@
 
 ## 현재 상태 요약
 
-**기준일**: 2026-06-20
+**기준일**: 2026-06-25
 
 | Phase | 상태 |
 |-------|------|
@@ -26,6 +26,14 @@
 | Phase 4: 상점 + 꾸미기 | 완료 |
 | Phase 5: 랭킹 + 마이페이지 통계 | 완료 |
 | Phase 6: 폴리시 | 완료 |
+| Phase 7: 코드 품질 개선 | 완료 |
+
+### 배포 현황
+
+| 영역 | 호스팅 | URL |
+|------|--------|-----|
+| API 서버 | Render | https://antbattle.onrender.com/api |
+| 웹 앱 | Vercel | Expo web export (자동 배포) |
 
 ## Phase 0: 프로젝트 스캐폴딩
 
@@ -109,83 +117,21 @@ AntBattle/
 - `mobile/src/types/models.ts` — User.email 필드 추가
 - `mobile/src/types/api.ts` — SignupRequest.email 필드 추가
 
-### API 엔드포인트
-
-| 메서드 | 경로 | 인증 | 설명 |
-|--------|------|------|------|
-| POST | `/api/auth/signup` | 불필요 | 회원가입 (email, nickname, handle, password) |
-| POST | `/api/auth/login` | 불필요 | 로그인 (handle, password) → JWT 발급 |
-| GET | `/api/auth/me` | 필요 | 현재 유저 정보 + antBeans 잔액 조회 |
-
 ### 검증 결과
 
 | 항목 | 결과 |
 |------|------|
 | `tsc --noEmit` | 에러 없음 |
-| `tsc` (빌드) | 성공, dist/ 생성 |
 | 회원가입 API | 201 Created, passwordHash 미포함, antBeans: 500 (레저 기반) |
 | 로그인 API | 200 OK, JWT 발급, antBeans 잔액 반환 |
 | `/api/auth/me` (유효 토큰) | 200 OK, 유저 정보 + antBeans 반환 |
-| `/api/auth/me` (토큰 없음) | 401, `UNAUTHORIZED` |
-| `/api/auth/me` (잘못된 토큰) | 401, `Invalid or expired token` |
-| 중복 email 가입 | 409, `이미 사용 중인 이메일입니다` |
-| 중복 handle 가입 | 409, `이미 사용 중인 핸들입니다` |
-| seed 재실행 | 테스트 유저 2명 생성 (password: test1234, bcrypt 해싱) |
-
-### 보안 체크
-
-- [x] 비밀번호 bcrypt 해싱 (10 rounds)
-- [x] 응답에 passwordHash 미포함 (toSafeUser 함수)
-- [x] JWT payload에 userId만 포함
-- [x] email/handle unique constraint 기반 중복 방지
-- [x] zod validation (email 형식, handle 영문/숫자/밑줄, 비밀번호 6자+)
-- [x] 가입 보너스 개미콩은 AntBeanTransaction 레저 테이블에 signup_bonus로 기록
+| 중복 email/handle 가입 | 409, 적절한 에러 메시지 |
 
 ### Troubleshooting Notes
 
 #### 2026-06-18: `prisma migrate dev` non-interactive 환경 에러
 
-**증상**: User 모델에 required `email` 필드(unique)를 추가하고 migration 실행 시 에러
-
-```
-Error: Prisma Migrate has detected that the environment is non-interactive, which is not supported.
-```
-
-**원인**:
-- `prisma migrate dev`와 `--create-only` 모두 interactive 프롬프트가 필요
-- Claude Code CLI 환경이 non-interactive로 감지됨
-- DB 상태(User 0건)와는 무관한 실행 환경 문제
-
-**해결 방법**: 수동 migration 방식 사용
-1. `prisma/migrations/20260618020000_add_user_email/migration.sql` 파일을 직접 작성
-2. `npx prisma migrate deploy`로 적용 (non-interactive OK)
-3. `npx prisma generate`로 Client 재생성
-
-**Migration SQL 내용**:
-```sql
-ALTER TABLE "User" ADD COLUMN "email" TEXT NOT NULL;
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-CREATE INDEX "User_email_idx" ON "User"("email");
-```
-
-**검증 결과**:
-
-| 항목 | 결과 |
-|------|------|
-| `prisma migrate deploy` | 성공, migration 적용 완료 |
-| DB 스키마 확인 | `email TEXT NOT NULL` 컬럼 존재 확인 |
-| `prisma generate` | Prisma Client 재생성 완료 |
-| `tsc --noEmit` | 에러 없음 |
-| seed 재실행 | 불필요 (User 0건, Stock/AntItem 데이터 영향 없음) |
-
-**향후 참고**: 이 프로젝트에서 `prisma migrate dev`는 사용 불가. migration은 항상 SQL 수동 작성 + `prisma migrate deploy` 방식으로 진행.
-
-### Migrations
-
-| Migration | 변경 내용 | 적용일 |
-|-----------|----------|--------|
-| `20260617165815_init` | 전체 스키마 초기 생성 (10 테이블) | 2026-06-18 |
-| `20260618020000_add_user_email` | User.email 컬럼 추가 (NOT NULL, UNIQUE, INDEX) | 2026-06-18 |
+**해결**: SQL 직접 작성 + `prisma migrate deploy` 방식으로 전환. 이후 모든 migration은 이 방식을 따름.
 
 ---
 
@@ -195,68 +141,10 @@ CREATE INDEX "User_email_idx" ON "User"("email");
 
 **상태**: 완료 (2026-06-20)
 
-### 현재 워크트리에서 확인된 신규/수정 파일
+### 생성 파일 요약
 
-**Server**:
-
-- `server/src/controllers/friend.controller.ts`
-- `server/src/controllers/stock.controller.ts`
-- `server/src/controllers/user.controller.ts`
-- `server/src/routes/friend.routes.ts`
-- `server/src/routes/stock.routes.ts`
-- `server/src/routes/user.routes.ts`
-- `server/src/services/friend.service.ts`
-- `server/src/services/market-data/`
-- `server/src/routes/index.ts`
-
-**Mobile**:
-
-- `mobile/src/components/ant/AntCharacter.tsx`
-- `mobile/src/components/common/Button.tsx`
-- `mobile/src/navigation/MainTabNavigator.tsx`
-- `mobile/src/navigation/RootNavigator.tsx`
-- `mobile/src/navigation/types.ts`
-- `mobile/src/screens/auth/LoginScreen.tsx`
-- `mobile/src/screens/auth/SignupScreen.tsx`
-- `mobile/src/screens/auth/SplashScreen.tsx`
-- `mobile/src/screens/home/HomeScreen.tsx`
-- `mobile/src/screens/profile/MyPageScreen.tsx`
-- `mobile/src/screens/social/FriendListScreen.tsx`
-- `mobile/src/screens/social/FriendSearchScreen.tsx`
-- `mobile/src/services/auth.service.ts`
-- `mobile/src/services/friend.service.ts`
-- `mobile/src/services/stock.service.ts`
-- `mobile/src/services/user.service.ts`
-- `mobile/src/store/authStore.ts`
-- `mobile/src/store/friendStore.ts`
-- `mobile/src/types/api.ts`
-
-### API 엔드포인트
-
-| 메서드 | 경로 | 인증 | 설명 |
-|--------|------|------|------|
-| GET | `/api/users/me` | 필요 | 내 프로필 |
-| GET | `/api/users/me/beans` | 필요 | 개미콩 잔액과 최근 거래 |
-| GET | `/api/users/me/beans/history` | 필요 | 개미콩 거래 내역 |
-| GET | `/api/users/:id` | 필요 | 유저 프로필 |
-| GET | `/api/friends` | 필요 | 친구 목록 |
-| GET | `/api/friends/requests` | 필요 | 받은/보낸 친구 요청 |
-| POST | `/api/friends/search` | 필요 | handle 기반 유저 검색 |
-| POST | `/api/friends/request` | 필요 | 친구 요청 |
-| PATCH | `/api/friends/request/:id` | 필요 | 친구 요청 수락/거절 |
-| DELETE | `/api/friends/:friendshipId` | 필요 | 친구 관계 삭제 |
-| GET | `/api/stocks` | 필요 | 종목 목록, search/sector query 지원 |
-| GET | `/api/stocks/:id` | 필요 | 종목 상세와 가격 히스토리 |
-| GET | `/api/stocks/:id/price` | 필요 | 현재가와 등락률 |
-
-### 모바일 구현 범위
-
-- Auth stack: Splash, Login, Signup
-- App stack: MainTab, FriendSearch, FriendList
-- Main tabs: Home, Battle placeholder, Shop placeholder, MyPage
-- Zustand stores: authStore, friendStore
-- API service wrappers: auth, user, friend, stock
-- 공통 UI: Button, AntCharacter
+**Server**: friend/stock/user controller, service, routes, market-data 모듈
+**Mobile**: AntCharacter, Button, Navigation, Auth/Home/Social/Profile 화면, auth/friend/stock/user 서비스, authStore/friendStore
 
 ### 검증 결과
 
@@ -264,64 +152,24 @@ CREATE INDEX "User_email_idx" ON "User"("email");
 |------|------|
 | `cd server && npx tsc --noEmit` | 에러 없음 |
 | `cd mobile && npx tsc --noEmit` | 에러 없음 |
-| GET /api/users/me | 200 OK, 민두개미, antBeans: 500 |
-| GET /api/users/me/beans | 200 OK, balance: 500, transactions: 1건 |
-| POST /api/friends/search | 200 OK, ant_chulsoo 검색 성공 |
-| POST /api/friends/request | 200 OK, pending 상태 생성 |
-| PATCH /api/friends/request/:id (수락) | 200 OK, accepted 전환 |
-| GET /api/friends | 200 OK, 1명 (철수개미) |
+| GET /api/users/me | 200 OK |
+| POST /api/friends/search | 200 OK |
 | GET /api/stocks | 200 OK, 15개 종목 |
-| GET /api/stocks/:id | 200 OK, KB금융, 28일 가격 히스토리 |
-
-### Troubleshooting Notes
-
-#### 2026-06-20: AuthResponse에 antBeans 필드 누락
-
-**증상**: `mobile/src/store/authStore.ts`에서 `result.antBeans` 접근 시 TypeScript 에러
-
-**원인**: `mobile/src/types/api.ts`의 `AuthResponse` 타입에 `antBeans` 필드가 누락되어 있었음. 서버는 정상적으로 반환하고 있었으나 모바일 타입 정의만 누락.
-
-**해결**: `AuthResponse`에 `antBeans: number` 필드 추가
-
-#### 2026-06-20: GET /api/users/me 404 에러
-
-**증상**: `GET /api/users/me` 호출 시 `{"error":{"code":"NOT_FOUND","message":"User not found"}}`
-
-**원인**: `/api/users/:id` 라우트가 `me`를 사용자 ID로 해석하여 DB 조회 실패. `/me` 전용 라우트가 없었음.
-
-**해결**: `UserController.getMyProfile()` 메서드를 추가하여 `req.userId`로 조회하도록 분리. `/api/users/me` 라우트를 `/:id` 라우트보다 먼저 등록.
-
-### 다음 단계
-
-1. ~~Battle 도메인 API 설계 및 구현 (Phase 3)~~ → 완료
-2. 배틀 모바일 화면 구현
-3. Shop/Inventory 구현 (Phase 4)
 
 ---
 
 ## Phase 3: 배틀 시스템
 
-**목표**: 친구와 1:1 주식 수익률 배틀 전체 플로우 구현. 배틀 생성 → 기간 협상 → 종목 선택 → 진행(가격 업데이트) → 종료 → 보상 지급.
+**목표**: 친구와 1:1 주식 수익률 배틀 전체 플로우 구현
 
 **상태**: 완료 (2026-06-20)
 
-### 생성/수정 파일
+### 생성 파일 요약
 
-**신규 생성**:
-- `server/src/services/battle.service.ts` — 배틀 생성, 기간 협상, 종목 선택, 시작, 취소, tick(가격 갱신/종료)
-- `server/src/services/reward.service.ts` — 배틀 종료 후 개미콩 보상/랭크 점수 처리 (DB 트랜잭션)
-- `server/src/controllers/battle.controller.ts` — 배틀 API 핸들러
-- `server/src/routes/battle.routes.ts` — 배틀 라우트 + zod 검증
-- `mobile/src/services/battle.service.ts` — 배틀 API 호출 래퍼
-- `mobile/src/store/battleStore.ts` — Zustand 배틀 스토어
-
-**수정**:
-- `server/src/routes/index.ts` — battle 라우트 등록
-- `server/src/types/index.ts` — `battle_entry`, `battle_refund` 트랜잭션 타입 추가
-
-### 데이터 모델
-
-기존 Prisma 스키마 변경 없음. Phase 0에서 생성한 `Battle`, `BattleParticipant`, `PriceSnapshot` 모델을 그대로 활용.
+- `server/src/services/battle.service.ts` — 배틀 생성, 기간 협상, 종목 선택, 시작, 취소, tick
+- `server/src/services/reward.service.ts` — 보상/랭크 점수 처리 (DB 트랜잭션)
+- `server/src/controllers/battle.controller.ts` + `routes/battle.routes.ts`
+- `mobile/src/services/battle.service.ts` + `store/battleStore.ts`
 
 ### 배틀 상태 흐름
 
@@ -331,77 +179,16 @@ pending_period → pending_stock_selection → active → finished
              ↘ cancelled (참가비 환불)
 ```
 
-### API 엔드포인트
+### 개미콩 처리
 
-| 메서드 | 경로 | 인증 | 설명 |
-|--------|------|------|------|
-| POST | `/api/battles` | 필요 | 배틀 생성 (참가비 50콩 차감, 기간 제안) |
-| GET | `/api/battles` | 필요 | 내 배틀 목록 (?status 필터) |
-| GET | `/api/battles/:id` | 필요 | 배틀 상세 (참가자/종목/수익률 포함) |
-| POST | `/api/battles/:id/period` | 필요 | 기간 재제안 |
-| POST | `/api/battles/:id/period/respond` | 필요 | 기간 수락/거절 |
-| POST | `/api/battles/:id/stock` | 필요 | 종목 선택 (양쪽 완료 시 active 전환) |
-| POST | `/api/battles/:id/cancel` | 필요 | 배틀 취소 (active 전, 참가비 환불) |
-| POST | `/api/battles/tick` | 필요 | 가격 업데이트 + 기간 만료 종료 처리 (cron용) |
-
-### 개미콩 처리 방식
-
-| 이벤트 | 처리 | 트랜잭션 타입 |
+| 이벤트 | 금액 | 트랜잭션 타입 |
 |--------|------|-------------|
-| 배틀 생성 | 양쪽 50콩 차감 (Serializable 트랜잭션) | `battle_entry` |
-| 배틀 취소 | 양쪽 50콩 환불 | `battle_refund` |
-| 승리 | 100콩 지급 (멱등, referenceId 체크) | `battle_win` |
-| 패배 | 20콩 위로금 지급 | `battle_lose` |
-| 무승부 | 양쪽 50콩 지급 | `battle_draw` |
-| 3연승+ | 30콩 연승 보너스 | `streak_bonus` |
-
-### 보상/랭크 처리
-
-- 승리: rankScore +30, winCount +1, currentWinStreak +1
-- 패배: rankScore -10 (최소 0), loseCount +1, currentWinStreak 초기화
-- 무승부: rankScore +5, drawCount +1, currentWinStreak 초기화
-- 모든 보상은 `rewardService.processResult()` → DB 트랜잭션으로 일괄 처리
-- `grantBattleReward()`의 referenceId+type 조합으로 중복 지급 방지 (멱등성)
-
-### 검증 결과
-
-| 항목 | 결과 |
-|------|------|
-| `cd server && npx tsc --noEmit` | 에러 없음 |
-| `cd mobile && npx tsc --noEmit` | 에러 없음 |
-| 배틀 생성 (POST /battles) | 201 Created, status: pending_period |
-| 참가비 차감 확인 | 양쪽 500 → 450 (-50콩) |
-| 기간 수락 | pending_stock_selection, finalPeriod: 1d |
-| 종목 선택 (1명) | pending_stock_selection, participants: 1 |
-| 종목 선택 (2명) → 배틀 시작 | active, startAt 설정, 시작가 기록 |
-| 배틀 목록 조회 | 1건, active 상태 |
-| Tick (가격 업데이트) | updated: 1, finished: 0 |
-| 수익률/스케일 갱신 | 민두개미 -0.13% (scale 0.98), 철수개미 +0.82% (scale 1.02) |
-| 중복 배틀 방지 | 409 "이미 진행 중인 배틀이 있습니다" |
-
-### Troubleshooting Notes
-
-#### 2026-06-20: validate 미들웨어와 zod 스키마 구조 불일치
-
-**증상**: `POST /api/battles` 호출 시 `{"error":{"code":"VALIDATION_ERROR","message":"Invalid request data"}}`
-
-**원인**: `validate()` 미들웨어는 `schema.parse(req.body)`로 body를 직접 파싱하는데, battle.routes.ts에서 `z.object({ body: z.object({...}) })` 형태로 이중 래핑하여 `req.body`를 `{ body: { opponentId, ... } }` 구조로 검증하려 했음.
-
-**해결**: 기존 friend.routes.ts 패턴과 동일하게 `z.object({ opponentId, proposedPeriod })` 형태로 body 스키마만 직접 전달.
-
-#### 2026-06-20: /tick 라우트가 /:id에 매칭되는 문제
-
-**증상**: `POST /api/battles/tick` 호출 시 `tick`이 `:id` 파라미터로 매칭됨.
-
-**원인**: Express 라우트 등록 순서에서 `/:id`가 `/tick`보다 먼저 매칭.
-
-**해결**: `/tick` 라우트를 `/:id` 라우트보다 먼저 등록.
-
-### 다음 단계
-
-1. 배틀 모바일 화면 구현 (BattleRequest, PeriodNegotiation, StockSelect, BattleProgress, BattleResult)
-2. Shop/Inventory 구현 (Phase 4)
-3. ~~Ranking + MyPage 통계 (Phase 5)~~ → 완료
+| 배틀 생성 | -50 (양쪽) | battle_entry |
+| 배틀 취소 | +50 (양쪽) | battle_refund |
+| 승리 | +100 | battle_win |
+| 패배 | +20 | battle_lose |
+| 무승부 | +50 (양쪽) | battle_draw |
+| 3연승+ | +30 | streak_bonus |
 
 ---
 
@@ -411,54 +198,10 @@ pending_period → pending_stock_selection → active → finished
 
 **상태**: 완료 (2026-06-20)
 
-### 생성/수정 파일
+### 생성 파일 요약
 
-**신규 생성**:
-- `server/src/services/inventory.service.ts` — 상점 아이템 조회, 구매(중복 방지, 레저 차감), 인벤토리, 장착/해제
-- `server/src/controllers/shop.controller.ts` — 상점 API 핸들러
-- `server/src/routes/shop.routes.ts` — 상점 라우트 + zod 검증
-- `mobile/src/services/shop.service.ts` — 상점 API 호출 래퍼
-- `mobile/src/store/shopStore.ts` — Zustand 상점 스토어
-
-**수정**:
-- `server/src/routes/index.ts` — shop 라우트 등록
-
-### API 엔드포인트
-
-| 메서드 | 경로 | 인증 | 설명 |
-|--------|------|------|------|
-| GET | `/api/shop/items` | 필요 | 상점 아이템 목록 (?category 필터) |
-| POST | `/api/shop/purchase` | 필요 | 아이템 구매 (개미콩 차감, 중복 방지) |
-| GET | `/api/shop/inventory` | 필요 | 보유 아이템 목록 |
-| POST | `/api/shop/inventory/equip` | 필요 | 아이템 장착 |
-| POST | `/api/shop/inventory/unequip` | 필요 | 아이템 해제 |
-
-### 장착 시스템
-
-카테고리별 User 필드 매핑:
-
-| 카테고리 | User 필드 | 저장 값 |
-|---------|----------|--------|
-| hat | equippedHatId | 아이템 emoji |
-| glasses | equippedGlassesId | 아이템 emoji |
-| expression | equippedExpressionId | 아이템 emoji |
-| outfit | equippedOutfitId | 아이템 emoji |
-| background | equippedBackgroundId | 아이템 emoji |
-| title | equippedTitleId | 아이템 emoji |
-
-### 검증 결과
-
-| 항목 | 결과 |
-|------|------|
-| `cd server && npx tsc --noEmit` | 에러 없음 |
-| `cd mobile && npx tsc --noEmit` | 에러 없음 |
-| GET /api/shop/items | 200 OK, 23개 아이템 |
-| GET /api/shop/items?category=hat | 200 OK, 카테고리 필터 정상 |
-| POST /api/shop/purchase | 200 OK, 개미콩 차감, userItem 반환 |
-| POST /api/shop/purchase (중복) | 409 "이미 보유한 아이템입니다" |
-| GET /api/shop/inventory | 200 OK, 보유 아이템 목록 |
-| POST /api/shop/inventory/equip | 200 OK, User.equippedHatId 등 갱신 |
-| POST /api/shop/inventory/unequip | 200 OK, 해당 필드 null 전환 |
+- `server/src/services/inventory.service.ts` + `controllers/shop.controller.ts` + `routes/shop.routes.ts`
+- `mobile/src/services/shop.service.ts` + `store/shopStore.ts`
 
 ---
 
@@ -468,65 +211,10 @@ pending_period → pending_stock_selection → active → finished
 
 **상태**: 완료 (2026-06-20)
 
-### 생성/수정 파일
+### 생성 파일 요약
 
-**신규 생성**:
-- `server/src/services/ranking.service.ts` — 전체 랭킹(rankScore desc, winCount desc), 친구 랭킹, 유저 전적 통계(최근 5배틀 포함)
-- `server/src/controllers/ranking.controller.ts` — 랭킹 API 핸들러
-- `server/src/routes/ranking.routes.ts` — 랭킹 라우트 (authMiddleware)
-- `mobile/src/services/ranking.service.ts` — 랭킹 API 호출 래퍼
-- `mobile/src/store/rankingStore.ts` — Zustand 랭킹 스토어
-
-**수정**:
-- `server/src/routes/index.ts` — rankings 라우트 등록
-
-### API 엔드포인트
-
-| 메서드 | 경로 | 인증 | 설명 |
-|--------|------|------|------|
-| GET | `/api/rankings/global` | 필요 | 전체 랭킹 (?limit, 기본 50) + myRank |
-| GET | `/api/rankings/friends` | 필요 | 친구 랭킹 (나+친구) + myRank |
-| GET | `/api/rankings/stats/me` | 필요 | 내 전적 통계 + 최근 5배틀 |
-| GET | `/api/rankings/stats/:id` | 필요 | 유저 전적 통계 + 최근 5배틀 |
-
-### 랭킹 정렬 기준
-
-1차: rankScore 내림차순, 2차: winCount 내림차순
-
-myRank 계산: rankScore가 더 높거나, 동점일 때 winCount가 더 높은 유저 수 + 1
-
-### 전적 통계 응답
-
-```json
-{
-  "user": { "...userFields", "rankName": "브론즈 개미" },
-  "stats": {
-    "totalBattles": 0,
-    "winRate": 0,
-    "winCount": 0,
-    "loseCount": 0,
-    "drawCount": 0,
-    "currentWinStreak": 0,
-    "bestWinStreak": 0
-  },
-  "recentBattles": []
-}
-```
-
-### 검증 결과
-
-| 항목 | 결과 |
-|------|------|
-| `cd server && npx tsc --noEmit` | 에러 없음 |
-| `cd mobile && npx tsc --noEmit` | 에러 없음 |
-| GET /api/rankings/global | 200 OK, 3명 랭킹, myRank: 1 |
-| GET /api/rankings/friends | 200 OK, 2명(나+친구), myRank: 2 |
-| GET /api/rankings/stats/me | 200 OK, 전적 통계 + rankName |
-| GET /api/rankings/stats/:id | 200 OK, 타 유저 전적 통계 |
-
-### 다음 단계
-
-1. ~~Phase 6: 폴리시~~ → 완료
+- `server/src/services/ranking.service.ts` + `controllers/ranking.controller.ts` + `routes/ranking.routes.ts`
+- `mobile/src/services/ranking.service.ts` + `store/rankingStore.ts`
 
 ---
 
@@ -536,66 +224,89 @@ myRank 계산: rankScore가 더 높거나, 동점일 때 winCount가 더 높은 
 
 **상태**: 완료 (2026-06-20)
 
-### 생성/수정 파일
+### 생성 파일 요약
 
-**신규 생성**:
-- `mobile/src/components/common/EmptyState.tsx` — 재사용 빈 상태 (emoji, title, subtitle, CTA 버튼)
-- `mobile/src/components/common/LoadingView.tsx` — 전체 화면 로딩 (ActivityIndicator + 메시지)
-- `mobile/src/components/common/ErrorView.tsx` — 에러 화면 (emoji, 메시지, 재시도 버튼)
-- `mobile/src/components/common/SafetyDisclaimer.tsx` — 통일된 안전 문구 컴포넌트
-- `mobile/src/components/chart/MiniBarChart.tsx` — react-native-svg 기반 막대 차트
+- EmptyState, LoadingView, ErrorView, SafetyDisclaimer, MiniBarChart 컴포넌트
+- AntCharacter 스케일 애니메이션 (300ms easeInOut)
+- 의존성 추가: react-native-svg
 
-**수정**:
-- `mobile/src/components/ant/AntCharacter.tsx` — Animated API로 스케일 애니메이션(300ms easeInOut) 추가
-- `mobile/src/screens/home/HomeScreen.tsx` — LoadingView, SafetyDisclaimer 적용
-- `mobile/src/screens/profile/MyPageScreen.tsx` — LoadingView, SafetyDisclaimer, MiniBarChart 적용
-- `mobile/src/screens/social/FriendListScreen.tsx` — EmptyState 컴포넌트로 교체
-- `mobile/src/screens/auth/SplashScreen.tsx` — 안전 문구 내용 통일
+---
 
-**의존성 추가**:
-- `react-native-svg` (차트 렌더링용)
+## Phase 7: 코드 품질 개선
 
-### 공통 컴포넌트 상세
+**목표**: 테스트 추가, 에러 처리, 타입 안전, 코드 중복 제거, 보안/성능 개선, 접근성
 
-| 컴포넌트 | Props | 용도 |
-|---------|-------|------|
-| EmptyState | emoji, title, subtitle?, actionLabel?, onAction? | 데이터 없을 때 표시 |
-| LoadingView | message? (기본: "로딩 중...") | 화면 전체 로딩 |
-| ErrorView | message, onRetry? | 에러 발생 시 표시 |
-| SafetyDisclaimer | (없음) | 안전 문구 통일 |
-| MiniBarChart | data: {label, value, color}[], height? | 승/패/무 시각화 |
+**상태**: 완료 (2026-06-24)
 
-### 안전 문구 통일
+### 개선 항목 (13개)
 
-모든 화면에서 동일한 문구 사용:
-> 개미배틀은 투자 추천, 투자 자문, 자동매매, 금전 베팅을 제공하지 않습니다.
-> 표시되는 수익률과 종목 정보는 게임/학습 목적의 콘텐츠입니다.
+| # | 항목 | 내용 |
+|---|------|------|
+| 1 | 테스트 코드 추가 | Vitest 설치, battle-calc/rank/reward 테스트 (35개 케이스) |
+| 2 | Zustand 에러 상태 추가 | battleStore, friendStore, rankingStore, shopStore에 error 상태 추가 |
+| 3 | any 타입 제거 | inventory.service, battle.service → Prisma 타입, LoginScreen → unknown 타입 가드 |
+| 4 | SAFE_USER_SELECT 공통화 | user-select.ts 생성 (FULL/RANKING/EQUIPPED), 4개 파일에서 import |
+| 5 | 컨트롤러→서비스 분리 | user.service.ts 생성, user.controller에서 Prisma 직접 호출 제거 |
+| 6 | 페이지네이션 추가 | 배틀 목록/랭킹 API에 limit, offset 파라미터 추가 |
+| 7 | Rate Limiting 적용 | rateLimiter.ts 생성, 글로벌 200/15분, 인증 10/15분 |
+| 8 | 트랜잭션 원자성 수정 | auth.service signup을 prisma.$transaction()으로 래핑 |
+| 9 | DB 인덱스 추가 | Friendship 모델에 복합 인덱스 추가 |
+| 10 | 매직 넘버 상수화 | game-config.ts 생성, battle-calc/battle.service에서 import |
+| 11 | PriceSnapshot 최적화 | 가격 변동 1% 이상 시에만 기록 |
+| 12 | periodToMs 에러 처리 | 잘못된 기간 입력 시 에러 throw |
+| 13 | 접근성 레이블 추가 | HomeScreen, ShopScreen, BattleProgressScreen, LoginScreen |
 
-### 개미 스케일 애니메이션
+### 신규 생성 파일
 
-- React Native 내장 `Animated.timing` API 사용 (외부 라이브러리 불필요)
-- scale prop 변경 시 300ms easeInOut 트랜지션
-- `transform: [{ scale: animatedScale }]`로 적용
-- `useNativeDriver: true`로 성능 최적화
+- `server/vitest.config.ts`
+- `server/src/constants/game-config.ts`
+- `server/src/middleware/rateLimiter.ts`
+- `server/src/services/user.service.ts`
+- `server/src/utils/user-select.ts`
+- `server/src/utils/__tests__/battle-calc.test.ts`
+- `server/src/utils/__tests__/rank.test.ts`
+- `server/src/services/__tests__/reward.service.test.ts`
+
+### 수정 파일
+
+**Server**:
+- `package.json` — vitest 의존성, test/test:watch 스크립트 추가
+- `app.ts` — globalLimiter 적용
+- `auth.routes.ts` — authLimiter 적용
+- `auth.service.ts` — $transaction 래핑
+- `battle.service.ts` — Prisma 타입, ENTRY_FEE 상수, 페이지네이션, PriceSnapshot 최적화
+- `battle.controller.ts` — limit/offset 파싱
+- `inventory.service.ts` — Prisma 타입, EQUIPPED_USER_SELECT
+- `friend.service.ts` — FULL_USER_SELECT
+- `ranking.service.ts` — RANKING_USER_SELECT, offset 파라미터
+- `ranking.controller.ts` — offset 파싱
+- `user.controller.ts` — 서비스 호출로 변경
+- `battle-calc.ts` — SCALE_CONFIG import, periodToMs 에러 처리
+- `prisma/schema.prisma` — Friendship 인덱스 추가
+
+**Mobile**:
+- `store/battleStore.ts` — error 상태 추가
+- `store/friendStore.ts` — error 상태 추가
+- `store/rankingStore.ts` — error 상태 추가
+- `store/shopStore.ts` — error 상태 추가
+- `screens/auth/LoginScreen.tsx` — unknown 타입 가드, 접근성 레이블
+- `screens/home/HomeScreen.tsx` — 접근성 레이블
+- `screens/shop/ShopScreen.tsx` — 접근성 레이블
+- `screens/battle/BattleProgressScreen.tsx` — 접근성 레이블
 
 ### 검증 결과
 
 | 항목 | 결과 |
 |------|------|
+| `cd server && npm test` | 35 tests passed |
 | `cd server && npx tsc --noEmit` | 에러 없음 |
 | `cd mobile && npx tsc --noEmit` | 에러 없음 |
-| HomeScreen user=null 시 | LoadingView 표시 |
-| MyPageScreen user=null 시 | LoadingView 표시 |
-| FriendListScreen 친구 0명 | EmptyState 컴포넌트 표시 |
-| SplashScreen 안전 문구 | 통일된 문구 표시 |
-| AntCharacter scale 변경 | 300ms 애니메이션 동작 |
-| MiniBarChart 렌더링 | SVG 막대 차트 정상 |
 
 ---
 
 ## 전체 프로젝트 완료 요약
 
-모든 Phase(0~6) 구현 완료. MVP 기능 전체 동작.
+모든 Phase(0~7) 구현 완료. MVP 기능 전체 동작 + 코드 품질 개선 완료.
 
 ### 구현된 기능
 
@@ -606,5 +317,7 @@ myRank 계산: rankScore가 더 높거나, 동점일 때 winCount가 더 높은 
 | 친구 | 검색, 요청, 수락/거절, 목록, 삭제 |
 | 배틀 | 생성, 기간 협상, 종목 선택, 진행, 종료, 보상 |
 | 상점 | 아이템 조회, 구매, 인벤토리, 장착/해제 |
-| 랭킹 | 전체/친구 랭킹, 전적 통계 |
+| 랭킹 | 전체/친구 랭킹, 전적 통계, 페이지네이션 |
 | 폴리시 | 빈/로딩/에러 상태, 안전 문구, 차트, 애니메이션 |
+| 품질 | 테스트, 타입 안전, 에러 처리, 상수화, Rate Limiting, 접근성 |
+| 배포 | Render (API), Vercel (웹) |
