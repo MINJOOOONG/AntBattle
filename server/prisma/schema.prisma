@@ -79,6 +79,7 @@ model Friendship {
 
   @@unique([requesterId, receiverId])
   @@index([receiverId, status])
+  @@index([status, requesterId])
 }
 
 // ==================== Battle ====================
