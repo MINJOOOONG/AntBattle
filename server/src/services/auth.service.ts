@@ -38,21 +38,27 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(params.password, BCRYPT_ROUNDS);
 
-    const user = await prisma.user.create({
-      data: {
-        email: params.email,
-        nickname: params.nickname,
-        handle: params.handle,
-        passwordHash,
-      },
-    });
+    // 유저 생성 + 가입 보너스를 하나의 트랜잭션으로 처리
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email: params.email,
+          nickname: params.nickname,
+          handle: params.handle,
+          passwordHash,
+        },
+      });
 
-    // 가입 보너스 개미콩 지급 (레저 테이블에 기록)
-    await antBeanService.credit({
-      userId: user.id,
-      amount: REWARD.SIGNUP_BONUS_BEANS,
-      type: 'signup_bonus',
-      description: '회원가입 보너스',
+      await tx.antBeanTransaction.create({
+        data: {
+          userId: newUser.id,
+          amount: REWARD.SIGNUP_BONUS_BEANS,
+          type: 'signup_bonus',
+          description: '회원가입 보너스',
+        },
+      });
+
+      return newUser;
     });
 
     const token = signToken(user.id);
