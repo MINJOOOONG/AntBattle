@@ -13,12 +13,19 @@ export function calculateAntScale(myReturnRate: number, opponentReturnRate: numb
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
 }
 
+export type BattlePeriodValue = '1d' | '3d' | '1w' | '1m';
+
+const PERIOD_MS: Record<BattlePeriodValue, number> = {
+  '1d': 24 * 60 * 60 * 1000,
+  '3d': 3 * 24 * 60 * 60 * 1000,
+  '1w': 7 * 24 * 60 * 60 * 1000,
+  '1m': 30 * 24 * 60 * 60 * 1000,
+};
+
 export function periodToMs(period: string): number {
-  switch (period) {
-    case '1d': return 24 * 60 * 60 * 1000;
-    case '3d': return 3 * 24 * 60 * 60 * 1000;
-    case '1w': return 7 * 24 * 60 * 60 * 1000;
-    case '1m': return 30 * 24 * 60 * 60 * 1000;
-    default: return 24 * 60 * 60 * 1000;
+  const ms = PERIOD_MS[period as BattlePeriodValue];
+  if (ms === undefined) {
+    throw new Error(`유효하지 않은 배틀 기간입니다: ${period}`);
   }
+  return ms;
 }
