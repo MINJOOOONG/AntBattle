@@ -28,10 +28,14 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
     try {
       await login(handle.trim(), password);
       done = true;
-    } catch (e: any) {
-      const msg = e?.response?.data?.error?.message
-        ?? e?.message
-        ?? '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
+    } catch (e: unknown) {
+      let msg = '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
+      if (e && typeof e === 'object' && 'response' in e) {
+        const res = (e as { response?: { data?: { error?: { message?: string } } } }).response;
+        if (res?.data?.error?.message) msg = res.data.error.message;
+      } else if (e instanceof Error) {
+        msg = e.message;
+      }
       setError(msg);
     } finally {
       if (!done) {
