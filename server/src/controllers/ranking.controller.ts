@@ -7,8 +7,9 @@ export class RankingController {
     try {
       const userId = req.userId!;
       const limit = parseInt(String(req.query.limit ?? '50'), 10);
+      const offset = parseInt(String(req.query.offset ?? '0'), 10);
 
-      const result = await rankingService.getGlobalRanking(limit, userId);
+      const result = await rankingService.getGlobalRanking(limit, userId, offset);
       res.json(result);
     } catch (err) {
       next(err);

@@ -9,15 +9,16 @@ export class RankingService {
    * 전체 랭킹 조회.
    * rankScore 내림차순, 동점이면 winCount 내림차순.
    */
-  async getGlobalRanking(limit: number = 50, userId?: string) {
+  async getGlobalRanking(limit: number = 50, userId?: string, offset: number = 0) {
     const users = await prisma.user.findMany({
       select: RANKING_USER_SELECT,
       orderBy: [{ rankScore: 'desc' }, { winCount: 'desc' }],
       take: limit,
+      skip: offset,
     });
 
     const rankings = users.map((user, index) => ({
-      rank: index + 1,
+      rank: offset + index + 1,
       user: { ...user, rankName: getRankName(user.rankScore) },
     }));
 
