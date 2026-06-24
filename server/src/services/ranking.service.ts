@@ -1,25 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { getRankName } from '../utils/rank';
+import { RANKING_USER_SELECT } from '../utils/user-select';
 
 const prisma = new PrismaClient();
-
-const SAFE_USER_SELECT = {
-  id: true,
-  nickname: true,
-  handle: true,
-  rankScore: true,
-  winCount: true,
-  loseCount: true,
-  drawCount: true,
-  currentWinStreak: true,
-  bestWinStreak: true,
-  equippedHatId: true,
-  equippedGlassesId: true,
-  equippedExpressionId: true,
-  equippedOutfitId: true,
-  equippedBackgroundId: true,
-  equippedTitleId: true,
-} as const;
 
 export class RankingService {
   /**
@@ -28,7 +11,7 @@ export class RankingService {
    */
   async getGlobalRanking(limit: number = 50, userId?: string) {
     const users = await prisma.user.findMany({
-      select: SAFE_USER_SELECT,
+      select: RANKING_USER_SELECT,
       orderBy: [{ rankScore: 'desc' }, { winCount: 'desc' }],
       take: limit,
     });
@@ -87,7 +70,7 @@ export class RankingService {
 
     const users = await prisma.user.findMany({
       where: { id: { in: allIds } },
-      select: SAFE_USER_SELECT,
+      select: RANKING_USER_SELECT,
       orderBy: [{ rankScore: 'desc' }, { winCount: 'desc' }],
     });
 
@@ -108,7 +91,7 @@ export class RankingService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
-        ...SAFE_USER_SELECT,
+        ...RANKING_USER_SELECT,
         createdAt: true,
       },
     });
