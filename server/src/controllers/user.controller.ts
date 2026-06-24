@@ -1,32 +1,13 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../types';
 import { antBeanService } from '../services/ant-bean.service';
-import { NotFoundError } from '../utils/errors';
-import { getRankName } from '../utils/rank';
-import { FULL_USER_SELECT } from '../utils/user-select';
-
-const prisma = new PrismaClient();
+import { userService } from '../services/user.service';
 
 export class UserController {
   async getMyProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = req.userId!;
-      const user = await prisma.user.findUnique({
-        where: { id },
-        select: FULL_USER_SELECT,
-      });
-
-      if (!user) {
-        throw new NotFoundError('User');
-      }
-
-      const antBeans = await antBeanService.getBalance(user.id);
-      const rankName = getRankName(user.rankScore);
-
-      res.json({
-        user: { ...user, antBeans, rankName },
-      });
+      const result = await userService.getMyProfile(req.userId!);
+      res.json(result);
     } catch (err) {
       next(err);
     }
@@ -34,22 +15,8 @@ export class UserController {
 
   async getProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = req.params.id as string;
-      const user = await prisma.user.findUnique({
-        where: { id },
-        select: FULL_USER_SELECT,
-      });
-
-      if (!user) {
-        throw new NotFoundError('User');
-      }
-
-      const antBeans = await antBeanService.getBalance(user.id);
-      const rankName = getRankName(user.rankScore);
-
-      res.json({
-        user: { ...user, antBeans, rankName },
-      });
+      const result = await userService.getUserProfile(req.params.id as string);
+      res.json(result);
     } catch (err) {
       next(err);
     }
