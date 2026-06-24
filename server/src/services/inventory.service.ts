@@ -1,18 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { antBeanService } from './ant-bean.service';
 import { NotFoundError, AppError, ConflictError } from '../utils/errors';
+import { EQUIPPED_USER_SELECT } from '../utils/user-select';
 
 const prisma = new PrismaClient();
-
-const SAFE_USER_SELECT = {
-  id: true,
-  equippedHatId: true,
-  equippedGlassesId: true,
-  equippedExpressionId: true,
-  equippedOutfitId: true,
-  equippedBackgroundId: true,
-  equippedTitleId: true,
-} as const;
 
 // 카테고리 → User 장착 필드 매핑
 const CATEGORY_TO_FIELD: Record<string, string> = {
@@ -127,7 +118,7 @@ export class InventoryService {
 
     return prisma.user.findUnique({
       where: { id: userId },
-      select: SAFE_USER_SELECT,
+      select: EQUIPPED_USER_SELECT,
     });
   }
 
@@ -147,7 +138,7 @@ export class InventoryService {
 
     return prisma.user.findUnique({
       where: { id: userId },
-      select: SAFE_USER_SELECT,
+      select: EQUIPPED_USER_SELECT,
     });
   }
 }
