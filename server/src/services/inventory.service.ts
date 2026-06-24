@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { antBeanService } from './ant-bean.service';
 import { NotFoundError, AppError, ConflictError } from '../utils/errors';
 
@@ -31,7 +31,7 @@ export class InventoryService {
    * 상점 아이템 목록 조회.
    */
   async getShopItems(category?: string) {
-    const where: any = { isActive: true };
+    const where: Prisma.AntItemWhereInput = { isActive: true };
     if (category) {
       where.category = category;
     }
