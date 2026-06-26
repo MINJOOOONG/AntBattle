@@ -10,6 +10,8 @@ const envSchema = z.object({
   PORT: z.string().default('3000').transform(Number),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   MARKET_DATA_PROVIDER: z.enum(['mock', 'real']).default('mock'),
+  TOSS_CLIENT_ID: z.string().optional(),
+  TOSS_CLIENT_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
