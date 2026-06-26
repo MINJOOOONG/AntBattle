@@ -1,6 +1,7 @@
 import { env } from '../../config/env';
 import { IMarketDataService } from './market-data.interface';
 import { MockMarketDataService } from './mock-market-data.service';
+import { TossMarketDataService } from './toss-market-data.service';
 
 let instance: IMarketDataService | null = null;
 
@@ -11,9 +12,8 @@ export function getMarketDataService(): IMarketDataService {
         instance = new MockMarketDataService();
         break;
       case 'real':
-        // 추후 실제 증권 API 구현체로 교체
-        // instance = new RealMarketDataService();
-        throw new Error('Real market data provider is not implemented yet');
+        instance = new TossMarketDataService();
+        break;
       default:
         instance = new MockMarketDataService();
     }
